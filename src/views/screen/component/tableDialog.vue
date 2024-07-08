@@ -51,6 +51,9 @@ const $isMobile = isMobile();
 const cardList = defineAsyncComponent(() => import("./cardList.vue"));
 const DetailDialog = defineAsyncComponent(() => import("./detailDialog.vue"));
 const detailDialogRef = ref(null);
+
+const APIURL = "https://xjly.hbzg.cn";
+
 const state = reactive({
 	loading: false,
 	isShowDialog: false,
@@ -70,8 +73,31 @@ const handleCurrentChange = ()=>{
 	
 }
 
+//图片数据转换
+const transformImgData = (imgString: string) => {
+	let imgs = [] as any;
+	if (imgString) {
+		let json = JSON.parse(imgString);
+		if (json.length && json[0]?.url) {
+			json = json.map((item: any) => {
+				return APIURL + item.url;
+			});
+			imgs = json;
+		} else {
+			imgs = ["/@/assets/images/community/nopic.jpg"];
+		}
+	}
+	return imgs;
+};
 //字段脱敏
 const dealField = (v: any, col: any) => {
+	
+	if(v){
+		if(v.includes('"url":"/Upload/')){
+			v = transformImgData(v);
+		}
+	}
+	
 	if (v) {
 		if (col.sensitive == "realName") {
 			v = v.substr(0, 1) + "**";
@@ -89,12 +115,15 @@ const dealField = (v: any, col: any) => {
 const openDetail = (row: any) => {
 	detailDialogRef.value.openDialog(state.tableInfo, row);
 };
-const openDialog = (tableInfo: any, title: String) => {
+const openDialog = (tableInfo: any, title: String, tableParams?: Object | undefined) => {
 	tableInfo.columns = tableInfo.columns.filter((item:any)=>item.type!==1);
 	state.pageTitle = title;
 	state.tableInfo = tableInfo;
-	
+	if(tableParams){
+		state.tableParams = {...tableParams}
+	}
 	state.tableParams.tableId = tableInfo.tableId;
+
 	state.isShowDialog = true;
 	handleTable();
 };

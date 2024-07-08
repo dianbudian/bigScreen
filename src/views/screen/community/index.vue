@@ -22,8 +22,8 @@
 
 			<!-- 天气/二维码 -->
 			<div class="weather">
-				<iframe scrolling="no" src="https://widget.tianqiapi.com?style=tg&skin=pitaya&city=新津&color=fff" style="color: #fff; " frameborder="0" width="100%" height="50" allowtransparency="true"></iframe>
-				<img src="/@/assets/images/community/qr.jpg" class="qr" width="66" height="66" />
+				<iframe scrolling="no" :src="state.weatherAddress" style="color: #fff; " frameborder="0" width="100%" height="50" allowtransparency="true"></iframe>
+				<img :src="state.QRImg" class="qr" width="66" height="66" />
 			</div>
 		</header>
 
@@ -41,7 +41,7 @@
 						<!-- 图片滚动 -->
 						<el-carousel class="about" height="250px" :interval="3000" arrow="always">
 							<el-carousel-item v-for="(item, index) in state.introduce.picture" :key="index">
-								<img class="img" :src="item" />
+								<img class="img" :src="item" style="width:100%;height: 100%; object-fit:cover" />
 							</el-carousel-item>
 							<ul class="about-amount-layer">
 								<li>
@@ -154,7 +154,7 @@
 								<el-carousel height="150px" :interval="3000" arrow="always" indicator-position="outside">
 									<el-carousel-item v-for="(item,index) in state.openList1" :key="index">
 										<div class="news">
-											<div class="class-title" @click="openTableDialog(state.tableConfig.openInfoList,'党务公开')">{{item?.gongkaileixing}}</div>
+											<div class="class-title" @click="openTableDialog(state.tableConfig.openInfoList,'党务公开',{type:'党务'})">{{item?.gongkaileixing}}</div>
 											<img class="img" :src="item.thumb" @click="showViewer(item.xinxifujian)" />
 											<div>
 												<p class="title">{{item.xinxibiaoti}}</p>
@@ -169,7 +169,7 @@
 								<el-carousel height="150px" :interval="3000" arrow="always" indicator-position="outside">
 									<el-carousel-item v-for="(item,index) in state.openList2" :key="index">
 										<div class="news">
-											<div class="class-title" @click="openTableDialog(state.tableConfig.openInfoList,'财务公开')">{{item?.gongkaileixing}}</div>
+											<div class="class-title" @click="openTableDialog(state.tableConfig.openInfoList,'财务公开',{type:'财务'})">{{item?.gongkaileixing}}</div>
 											<img class="img" :src="item.thumb" @click="showViewer(item.xinxifujian)" />
 											<div>
 												<p class="title">{{item.xinxibiaoti}}</p>
@@ -184,7 +184,7 @@
 								<el-carousel height="150px" :interval="3000" arrow="always" indicator-position="outside">
 									<el-carousel-item v-for="(item,index) in state.openList3" :key="index">
 										<div class="news">
-											<div class="class-title" @click="openTableDialog(state.tableConfig.openInfoList,'村务公开')">{{item?.gongkaileixing}}</div>
+											<div class="class-title" @click="openTableDialog(state.tableConfig.openInfoList,'村务公开',{type:'村务'})">{{item?.gongkaileixing}}</div>
 											<img class="img" :src="item.thumb" @click="showViewer(item.xinxifujian)" />
 											<div>
 												<p class="title">{{item.xinxibiaoti}}</p>
@@ -388,7 +388,7 @@
 							<h2 class="card-title title-shadow">“诚”心言事口</h2>
 						</div>
 						<div>
-							<a class="more" href="javascript:;" @click="openQuestionFrom()">我要提问</a>
+							<!-- <a class="more" href="javascript:;" @click="openQuestionFrom()">我要提问</a> -->
 							<a class="more" href="javascript:;" @click="openTableDialog(state.tableConfig.questionList,'“诚”心言事口')">更多</a>
 						</div>
 					</div>
@@ -425,22 +425,17 @@
 <script lang="ts" setup>
 import {
 	onMounted,
-	// onUnmounted,
 	reactive,
 	ref,
-	// defineAsyncComponent,
 	getCurrentInstance,
 } from "vue";
-// import { ElMessageBox, ElMessage } from "element-plus";
 import { UserFilled } from "@element-plus/icons-vue";
 import { useRoute } from "vue-router";
-// import { debounce } from 'lodash';
 import { getAPI } from "/@/utils/request";
 import {
 	LargeScreenApi,
 	WeatherApi,
 } from "/@/api/sysApi";
-// import { formatDate } from "/@/utils/formatTime";
 
 import tableDialog from "../component/tableDialog.vue";
 import DetailDialog from '../component/detailDialog.vue';
@@ -485,6 +480,8 @@ const inergralTotal = {
 const state = reactive({
 	id: "" as String | Number,
 	title: "" as String,
+	weatherAddress : "" as String,
+	QRImg: '' as String,
 	isViewer: false,
 	pics: [],
 	tableConfig: {} as any,
@@ -535,11 +532,13 @@ const state = reactive({
 });
 
 onMounted(() => {
-	state.id = route.query?.id ?? "35300665880105";
+	state.id = route.query?.id ?? "";
+	
+	state.QRImg = '/src/assets/images/community/qr_'+state.id+'.jpg';
 	getIntroduce();
 	getEconomyTotal();
 	getEconomyItemData();
-	getWeather();
+	// getWeather();
 	getPageDate();
 	getIntegralTotal();
 	getReportList();
@@ -593,6 +592,7 @@ const getIntroduce = async () => {
 	tmp.picture = transformImgData(tmp.picture);
 	state.introduce = tmp;
 	state.title = tmp.communityName;
+	state.weatherAddress = `https://widget.tianqiapi.com?style=tg&skin=pitaya&city=新津&color=fff`;
 };
 //图片数据转换
 const transformImgData = (imgString: string) => {
@@ -621,6 +621,7 @@ const getOpenList = async (tag: String) => {
 	const { data } = await getAPI(LargeScreenApi).openInfoList(query);
 	let tmp = data.result?.list?.items ?? [];
 	state.tableConfig.openInfoList = data.result.tableColumns;
+	state.tableConfig.openInfoList.columns = state.tableConfig.openInfoList.columns.filter((item:any)=>item.type!==1);
 	tmp = tmp.map((item: any) => {
 		item.xinxifujian = transformImgData(item.xinxifujian);
 		item.thumb = item.xinxifujian[0];
@@ -655,6 +656,7 @@ const getReportList = async () => {
 	const { data } = await getAPI(LargeScreenApi).reportList(query);
 	state.reportListData = data.result?.list?.items ?? [];
 	state.tableConfig.reportList = data.result.tableColumns;
+	state.tableConfig.reportList.columns = state.tableConfig.reportList.columns.filter((item:any)=>item.type!==1);
 };
 //言
 const questionsAndAnswersList = async () => {
@@ -668,6 +670,7 @@ const questionsAndAnswersList = async () => {
 	);
 	state.questionListData = data.result?.list?.items ?? [];
 	state.tableConfig.questionList = data.result.tableColumns;
+	state.tableConfig.questionList.columns = state.tableConfig.questionList.columns.filter((item:any)=>item.type!==1);
 };
 //诚议统计
 const getArgumentAmount = async () => {
@@ -686,6 +689,7 @@ const getArgumentList = async () => {
 	const { data } = await getAPI(LargeScreenApi).civilList(query);
 	state.argumentListData = data.result?.list?.items ?? [];
 	state.tableConfig.argumentList = data.result.tableColumns;
+	state.tableConfig.argumentList.columns = state.tableConfig.argumentList.columns.filter((item:any)=>item.type!==1);
 };
 
 // 开诚布公统计
@@ -702,7 +706,7 @@ const getEconomyItemData = async()=>{
 	let tmp = data.result ?? [];
 	state.economyItemData = tmp;
 }
-//列史
+//志愿者
 const getVolunteerList = async () => {
 	const { data } = await getAPI(LargeScreenApi).volunteerList({
 		id: state.id,
@@ -712,6 +716,8 @@ const getVolunteerList = async () => {
 	let tmp = data.result?.list?.items ?? [];
 	state.volunteerList = tmp;
 	state.tableConfig.volunteerList = data.result.tableColumns;
+		state.tableConfig.volunteerList.columns = state.tableConfig.volunteerList.columns.filter((item:any)=>item.type!==1);
+
 };
 // 总排行
 const getTotalRanking = async () => {
@@ -760,9 +766,9 @@ const clickRankingTag = (tag: String) => {
 	}
 };
 // 列表弹窗
-const openTableDialog = (tableConfig: any, title: String) => {
+const openTableDialog = (tableConfig: any, title: String, tableParams?: Object|undefined) => {
 	if (tableConfig) {
-		tableDialogRef?.value.openDialog(tableConfig, title);
+		tableDialogRef?.value.openDialog(tableConfig, title, tableParams);
 	}
 };
 // 详情弹窗
@@ -1145,6 +1151,7 @@ div {
 	display: flex;
 	flex-wrap: wrap;
 	.item {
+		max-width: 33%;
 		padding: 10px 2%;
 		flex-grow: 1;
 		margin: 10px 10px auto 10px;
@@ -1152,6 +1159,7 @@ div {
 			no-repeat;
 		background-size: 100% 100%;
 		li {
+			
 			padding: 5px 8px;
 			font-size: 12px;
 			margin-top: 2px;

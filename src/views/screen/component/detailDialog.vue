@@ -8,7 +8,7 @@
 			</template>
 			<el-descriptions class="margin-top" :column="1" border>
 				<el-descriptions-item v-for="(col,index) in state.tableInfo.columns" :key="index">
-					<template #label>{{col.title}}</template>
+					<template #label>{{col.name}}</template>
 					{{dealField(state.formData[col.column], col.sensitive)}}
 				</el-descriptions-item>
 			</el-descriptions>
@@ -26,9 +26,10 @@ import {
 import { getAPI } from "/@/utils/request";
 import { DiyDataApi } from "/@/api/sysApi";
 import { isMobile } from "/@/utils/other";
+
 const { proxy } = getCurrentInstance();
 const $isMobile = isMobile();
-
+const APIURL = "https://xjly.hbzg.cn";
 const state = reactive({
 	loading: false,
 	isShowDialog: false,
