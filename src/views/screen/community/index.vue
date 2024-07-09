@@ -1,10 +1,10 @@
 <template>
 	<!-- 社区 -->
-	<div class="screen-page flex flex-column">
+	<div class="screen-page flex flex-column" :style="state.pageStyle">
 		<!-- 大标题 -->
 		<header class="header">
 			<div class="flex flex-ai-center flex-jc-center" style="height:60px">
-				<img src="/@/assets/images/logo.png" class="logo" width="40" height="40" />
+				<img v-if="state.logo" :src="state.logo" class="logo" width="40" height="40" />
 				<div class="position-relative">
 					<b class="gradient-color screen-title position-relative z-index-up">新津区基层治理{{state.title}}“诚”列馆</b>
 					<b class="screen-title title-shadow">新津区基层治理{{state.title}}“诚”列馆</b>
@@ -13,17 +13,25 @@
 			<div class="screen-subtitle">真诚待人 真心为民</div>
 
 			<!-- 时间 -->
-			<div class="date">
-				<span class="num">{{state.pageDate?.year}}</span> 年
-				<span class="num">{{state.pageDate?.month}}</span> 月
-				<span class="num">{{state.pageDate?.day}}</span> 日
-				<span class="num">{{state.pageDate?.hour}}:{{state.pageDate?.minute}}:{{state.pageDate?.second}}</span>
+			<div class="date-bar">
+				<div>
+					<div class="time">
+						<span class="num">{{state.pageDate?.hour}}:{{state.pageDate?.minute}}:{{state.pageDate?.second}}</span>
+					</div>
+					<div class="date">
+						<span class="num">{{state.pageDate?.year}}</span> 年
+						<span class="num">{{state.pageDate?.month}}</span> 月
+						<span class="num">{{state.pageDate?.day}}</span> 日
+					</div>
+				</div>
+				<span class="week">星期{{state.pageDate?.week}}</span>
 			</div>
 
 			<!-- 天气/二维码 -->
 			<div class="weather">
+				<span class="weather-address">空气质量</span>
 				<iframe scrolling="no" :src="state.weatherAddress" style="color: #fff; " frameborder="0" width="100%" height="50" allowtransparency="true"></iframe>
-				<img :src="state.QRImg" class="qr" width="66" height="66" />
+				<div class="qrcode" ref="QRCodeRef"></div>
 			</div>
 		</header>
 
@@ -41,7 +49,7 @@
 						<!-- 图片滚动 -->
 						<el-carousel class="about" height="250px" :interval="3000" arrow="always">
 							<el-carousel-item v-for="(item, index) in state.introduce.picture" :key="index">
-								<img class="img" :src="item" style="width:100%;height: 100%; object-fit:cover" />
+								<img class="img" :src="item" style="width:100%;height: 100%; object-fit:cover" @click="showViewer(state.introduce.picture)" />
 							</el-carousel-item>
 							<ul class="about-amount-layer">
 								<li>
@@ -66,7 +74,7 @@
 				</div>
 
 				<!--  -->
-				<div class="card mt20 report-news-card flex-grow">
+				<div class="card mt20 report-news-card flex-grow" v-if="!($isMobile && !state.reportListData.length)">
 					<div class="card-header">
 						<div class="position-relative">
 							<h2 class="card-title position-relative z-index-up">{{state.title}}“诚”报</h2>
@@ -77,11 +85,13 @@
 						<vue3-seamless-scroll ref="reportNewsRef" :list="state.reportListData" :singleHeight="0" :step="0.5" :hover="true" :limitScrollNum="3" class="seamless-wrap">
 							<ul class="report-news">
 								<li v-for="(item,index) in state.reportListData" :key="index">
-									<div class="imgbox">
-										<img src="/@/assets/images/community/news.jpg" onerror="this.src='/@/assets/images/logo.png'" />
-									</div>
+									<el-image fit="cover" class="imgbox" :src="item.thumb" @click="showViewer([item.thumb])">
+										<template #error>
+											<img src="/@/assets/images/community/nonews.jpg" class="error-img" />
+										</template>
+									</el-image>
 									<div class="main">
-										<p class="title">{{item.xiangguanneirong}}</p>
+										<p class="title ellipsis-2" @click="openDetail(state.tableConfig.reportListData, item)">{{item.xiangguanneirong}}</p>
 										<p>
 											<el-text type="warning" size="small">[{{item.leixing}}]</el-text>
 											<el-text type="info" class="date" size="small">时间:</el-text>
@@ -152,12 +162,17 @@
 							<!-- 党务 -->
 							<div class="public-news-box">
 								<el-carousel height="150px" :interval="3000" arrow="always" indicator-position="outside">
+									<div class="class-title" @click="openTableDialog(state.tableConfig.openInfoList,'党务公开',{type:'党务'})">党务公开</div>
 									<el-carousel-item v-for="(item,index) in state.openList1" :key="index">
 										<div class="news">
-											<div class="class-title" @click="openTableDialog(state.tableConfig.openInfoList,'党务公开',{type:'党务'})">{{item?.gongkaileixing}}</div>
-											<img class="img" :src="item.thumb" @click="showViewer(item.xinxifujian)" />
+											<!-- <img class="img" :src="item.thumb" @click="showViewer(item.xinxifujian)" /> -->
+											<el-image fit="cover" class="img" :src="item.thumb" @click="showViewer([item.xinxifujian])">
+												<template #error>
+													<img src="/@/assets/images/community/nonews.jpg" class="error-img" />
+												</template>
+											</el-image>
 											<div>
-												<p class="title">{{item.xinxibiaoti}}</p>
+												<p class="title ellipsis-2">{{item.xinxibiaoti}}</p>
 												<p class="info">{{item.gongkaishijian}}</p>
 											</div>
 										</div>
@@ -167,12 +182,16 @@
 							<!-- 财务 -->
 							<div class="public-news-box">
 								<el-carousel height="150px" :interval="3000" arrow="always" indicator-position="outside">
+									<div class="class-title" @click="openTableDialog(state.tableConfig.openInfoList,'财务公开',{type:'财务'})">财务公开</div>
 									<el-carousel-item v-for="(item,index) in state.openList2" :key="index">
 										<div class="news">
-											<div class="class-title" @click="openTableDialog(state.tableConfig.openInfoList,'财务公开',{type:'财务'})">{{item?.gongkaileixing}}</div>
-											<img class="img" :src="item.thumb" @click="showViewer(item.xinxifujian)" />
+											<el-image fit="cover" class="img" :src="item.thumb" @click="showViewer([item.xinxifujian])">
+												<template #error>
+													<img src="/@/assets/images/community/nonews.jpg" class="error-img" />
+												</template>
+											</el-image>
 											<div>
-												<p class="title">{{item.xinxibiaoti}}</p>
+												<p class="title ellipsis-2">{{item.xinxibiaoti}}</p>
 												<p class="info">{{item.gongkaishijian}}</p>
 											</div>
 										</div>
@@ -182,12 +201,16 @@
 							<!-- 村务 -->
 							<div class="public-news-box">
 								<el-carousel height="150px" :interval="3000" arrow="always" indicator-position="outside">
+									<div class="class-title" @click="openTableDialog(state.tableConfig.openInfoList,'村务公开',{type:'村务'})">村务公开</div>
 									<el-carousel-item v-for="(item,index) in state.openList3" :key="index">
 										<div class="news">
-											<div class="class-title" @click="openTableDialog(state.tableConfig.openInfoList,'村务公开',{type:'村务'})">{{item?.gongkaileixing}}</div>
-											<img class="img" :src="item.thumb" @click="showViewer(item.xinxifujian)" />
+											<el-image fit="cover" class="img" :src="item.thumb" @click="showViewer([item.xinxifujian])">
+												<template #error>
+													<img src="/@/assets/images/community/nonews.jpg" class="error-img" />
+												</template>
+											</el-image>
 											<div>
-												<p class="title">{{item.xinxibiaoti}}</p>
+												<p class="title ellipsis-2">{{item.xinxibiaoti}}</p>
 												<p class="info">{{item.gongkaishijian}}</p>
 											</div>
 										</div>
@@ -198,7 +221,7 @@
 						<!-- news end -->
 					</div>
 				</div>
-				<div class="card mt20 flex-grow overflow-hidden argument-card">
+				<div class="card mt20 flex-grow overflow-hidden argument-card" v-if="!($isMobile && !state.argumentListData.length)">
 					<div class="card-header">
 						<div class="position-relative">
 							<h2 class="card-title position-relative z-index-up">民事“诚”议</h2>
@@ -240,7 +263,7 @@
 							<ul class="argument-list">
 								<li v-for="(item,index) in state.argumentListData" :key="index">
 									<div class="main">
-										<p class="title">{{item.yiti}}</p>
+										<p class="title ellipsis-2"  @click="openDetail(state.tableConfig.argumentList, item)">{{item.yiti}}</p>
 										<el-text class="date" type="info" size="small">{{item.CreateTime}}</el-text>
 									</div>
 									<el-text class="state" :type="item.yitizhuangtai=='已决议'?'success':'danger'">{{item.yitizhuangtai}}</el-text>
@@ -333,7 +356,7 @@
 							</div>-->
 						</div>
 						<!-- 排行 -->
-						<div class="flex flex-column h5-mt20" style="min-width: 210px">
+						<div class="flex flex-column h5-mt20" style="min-width: 210px" v-if="!($isMobile && !state.rankingTop.length)">
 							<!-- 排行标题 -->
 							<div class="ranking-title-bar">
 								信义币
@@ -351,7 +374,7 @@
 										<el-image :src="item['icon']" fit="contain" class="cup-img"></el-image>
 										<el-image fit="contain" class="head-img" @click="showViewer([item.headPortrait])">
 											<template #error>
-												<img src="/@/assets/images/community/noimg.png" class="error-img" />
+												<img src="/@/assets/images/community/nohead.png" class="error-img" />
 											</template>
 										</el-image>
 										{{item.name}}
@@ -368,7 +391,7 @@
 												<el-text class="ranking-num">{{index+4}}</el-text>
 												<el-image fit="contain" class="head-img" @click="showViewer([item.headPortrait])">
 													<template #error>
-														<img src="https://xjly.hbzg.cn/boercun/logo.png" class="error-img" />
+														<img src="/@/assets/images/community/nohead.png" class="error-img" />
 													</template>
 												</el-image>
 												{{item.name}}
@@ -381,7 +404,7 @@
 						</div>
 					</div>
 				</div>
-				<div class="card mt20 flex-grow question-card">
+				<div class="card mt20 flex-grow question-card" v-if="!($isMobile && !state.questionListData.length)">
 					<div class="card-header">
 						<div class="position-relative">
 							<h2 class="card-title position-relative z-index-up">“诚”心言事口</h2>
@@ -395,10 +418,10 @@
 					<div class="card-body">
 						<vue3-seamless-scroll ref="questionRef" :list="state.questionListData" :singleHeight="0" :step="0.5" :hover="true" :limitScrollNum="3" class="seamless-wrap">
 							<ul class="question-list">
-								<li v-for="(item,index) in state.questionListData" :key="index" @click="openDetail(state.tableConfig.questionList, item)" >
+								<li v-for="(item,index) in state.questionListData" :key="index" @click="openDetail(state.tableConfig.questionList, item)">
 									<img class="icon" src="/@/assets/images/community/icon-news.png" />
 									<div class="main">
-										<div class="title">{{item.wentineirong}}</div>
+										<div class="title ellipsis-2">{{item.wentineirong}}</div>
 										<div class="date">{{item.CreateTime}}</div>
 										<p class="replay" v-if="item.huifuneirong.length > 0">回复：{{item.huifuneirong}}</p>
 										<el-text type="danger" size="small" v-if="item.huifuneirong.length < 1">[未回复]</el-text>
@@ -410,38 +433,30 @@
 				</div>
 			</div>
 		</main>
-
-		<!-- 图片预览组件 -->
-		<el-image-viewer v-if="state.isViewer" :urlList="state.pics" @close="closeViewer" :zIndex="9999"></el-image-viewer>
-		<!-- 列表 -->
-		<tableDialog ref="tableDialogRef"></tableDialog>
-		<!-- 详情 -->
-		<DetailDialog ref="detailDialogRef"></DetailDialog>
-		<!-- 发起质疑 -->
-		<QuestionFormDialog ref="questionFormDialogRef"></QuestionFormDialog>
 	</div>
+
+	<!-- 图片预览组件 -->
+	<el-image-viewer v-if="state.isViewer" :urlList="state.pics" @close="closeViewer" :zIndex="9999"></el-image-viewer>
+	<!-- 列表 -->
+	<TableDialog ref="tableDialogRef"></TableDialog>
+	<!-- 详情 -->
+	<DetailDialog ref="detailDialogRef"></DetailDialog>
+	<!-- 发起质疑 -->
+	<QuestionFormDialog ref="questionFormDialogRef"></QuestionFormDialog>
 </template>
 
 <script lang="ts" setup>
-import {
-	onMounted,
-	reactive,
-	ref,
-	getCurrentInstance,
-} from "vue";
+import { onMounted, reactive, ref, getCurrentInstance } from "vue";
 import { UserFilled } from "@element-plus/icons-vue";
 import { useRoute } from "vue-router";
 import { getAPI } from "/@/utils/request";
-import {
-	LargeScreenApi,
-	WeatherApi,
-} from "/@/api/sysApi";
+import { isMobile } from "/@/utils/other";
+import { LargeScreenApi, WeatherApi } from "/@/api/sysApi";
+import QRCode from "qrcodejs2-fixes";
 
-import tableDialog from "../component/tableDialog.vue";
-import DetailDialog from '../component/detailDialog.vue';
+import TableDialog from "../component/tableDialog.vue";
+import DetailDialog from "../component/detailDialog.vue";
 import QuestionFormDialog from "../component/questionFormDialog.vue";
-
-import AboutPic from "/@/assets/images/community/about.jpg";
 
 const route = useRoute();
 const questionRef = ref(null);
@@ -449,6 +464,8 @@ const reportNewsRef = ref(null);
 const questionFormDialogRef = ref(null);
 const tableDialogRef = ref(null);
 const detailDialogRef = ref(null);
+const QRCodeRef = ref(null);
+const $isMobile = isMobile();
 
 const APIURL = "https://xjly.hbzg.cn";
 import rankTop1 from "/@/assets/images/community/rank_top1.png";
@@ -478,13 +495,16 @@ const inergralTotal = {
 	durationTotal: "-",
 };
 const state = reactive({
-	id: "" as String | Number,
-	title: "" as String,
-	weatherAddress : "" as String,
-	QRImg: '' as String,
-	isViewer: false,
+	id: "" as String | Number, //大屏ID
+	title: "" as String, //大屏标题
+	logo: "" as any, //大屏LOGO
+	pageStyle: "" as String, //大屏等比例样式
+	weatherAddress: "" as String, //天气地址
+	isViewer: false, //图片预览
 	pics: [],
+	//表配置
 	tableConfig: {} as any,
+	//时钟
 	pageDate: {
 		year: "0000",
 		month: "00",
@@ -492,8 +512,9 @@ const state = reactive({
 		hour: "00",
 		minute: "00",
 		second: "00",
+		week: "",
 	},
-	//列史
+	//诚列史
 	introduce: {
 		square: 0,
 		households: 0,
@@ -503,7 +524,7 @@ const state = reactive({
 		history: "",
 		picture: [],
 	},
-	//开诚布公
+	//集体经济
 	economyTotal: economyTotal as any,
 	economyItemData: [] as any,
 	//诚报
@@ -511,7 +532,7 @@ const state = reactive({
 	//诚议
 	argumentAmount: argumentAmount as any,
 	argumentListData: [] as Array<any>,
-	//积分统计
+	//诚议币统计
 	inergralTotal: inergralTotal as any,
 	//排行
 	rankingTag: "总排行" as String,
@@ -527,63 +548,48 @@ const state = reactive({
 	openList3: [] as Array<any>,
 	//志愿者队伍
 	volunteerList: [] as Array<any>,
-	//问题
+	//言事口
 	questionListData: [] as Array<any>,
 });
-
 onMounted(() => {
 	state.id = route.query?.id ?? "";
-	
-	state.QRImg = '/src/assets/images/community/qr_'+state.id+'.jpg';
+	//非移动端按比例显示
+	if (!$isMobile) {
+		initScreen();
+		window.addEventListener("resize", () => {
+			initScreen();
+		});
+	}
+	//二维码
+	initQrcode();
+	//诚列史
 	getIntroduce();
+	//集体经济
 	getEconomyTotal();
 	getEconomyItemData();
-	// getWeather();
+	//时钟
 	getPageDate();
+	//诚议币
 	getIntegralTotal();
+	//诚报
 	getReportList();
+	//言事口
 	questionsAndAnswersList();
+	//排行
 	getTotalRanking();
 	getMonthRanking();
+	//诚议
 	getArgumentAmount();
 	getArgumentList();
 	//三务
 	getOpenList("党务");
 	getOpenList("财务");
 	getOpenList("村务");
-	//
+	//志愿者
 	getVolunteerList();
 });
-const getImg = (jsonStr: String) => {
-	if (!jsonStr) return false;
-	let json = JSON.parse(jsonStr);
-	if (json.length && json[0]?.url) {
-		return "/" + json[0].url;
-	}
-};
-const getWeather = async () => {
-	// https://widget.tianqiapi.com?style=tg&skin=pitaya&city=新津&color=fff
-	const { data } = await getAPI(WeatherApi).getWeatherV6({
-		city: "新津",
-	});
-	console.log(data);
-};
-// 时钟
-const getPageDate = () => {
-	setInterval(() => {
-		let now = new Date();
-		let date = {
-			year: now.getFullYear(),
-			month: ("0" + (now.getMonth() + 1)).substr(-2),
-			day: ("0" + now.getDate()).substr(-2),
-			hour: ("0" + now.getHours()).substr(-2),
-			minute: ("0" + now.getMinutes()).substr(-2),
-			second: ("0" + now.getSeconds()).substr(-2),
-		};
-		state.pageDate = { ...date };
-	}, 1000);
-};
-//列史
+
+//诚列史
 const getIntroduce = async () => {
 	const { data } = await getAPI(LargeScreenApi).introduce({
 		id: state.id,
@@ -592,24 +598,11 @@ const getIntroduce = async () => {
 	tmp.picture = transformImgData(tmp.picture);
 	state.introduce = tmp;
 	state.title = tmp.communityName;
+	//meta-title
+	document.title = `${state.title}`;
 	state.weatherAddress = `https://widget.tianqiapi.com?style=tg&skin=pitaya&city=新津&color=fff`;
 };
-//图片数据转换
-const transformImgData = (imgString: string) => {
-	let imgs = [] as any;
-	if (imgString) {
-		let json = JSON.parse(imgString);
-		if (json.length && json[0]?.url) {
-			json = json.map((item: any) => {
-				return APIURL + item.url;
-			});
-			imgs = json;
-		} else {
-			imgs = ["/@/assets/images/community/nopic.jpg"];
-		}
-	}
-	return imgs;
-};
+
 //三务
 const getOpenList = async (tag: String) => {
 	let query = {
@@ -621,7 +614,10 @@ const getOpenList = async (tag: String) => {
 	const { data } = await getAPI(LargeScreenApi).openInfoList(query);
 	let tmp = data.result?.list?.items ?? [];
 	state.tableConfig.openInfoList = data.result.tableColumns;
-	state.tableConfig.openInfoList.columns = state.tableConfig.openInfoList.columns.filter((item:any)=>item.type!==1);
+	state.tableConfig.openInfoList.columns =
+		state.tableConfig.openInfoList.columns.filter(
+			(item: any) => item.type !== 1
+		);
 	tmp = tmp.map((item: any) => {
 		item.xinxifujian = transformImgData(item.xinxifujian);
 		item.thumb = item.xinxifujian[0];
@@ -639,7 +635,7 @@ const getOpenList = async (tag: String) => {
 	}
 };
 
-//积分总计
+//诚议币总计
 const getIntegralTotal = async () => {
 	const { data } = await getAPI(LargeScreenApi).integralTotal({
 		id: state.id,
@@ -654,11 +650,20 @@ const getReportList = async () => {
 		id: state.id,
 	};
 	const { data } = await getAPI(LargeScreenApi).reportList(query);
-	state.reportListData = data.result?.list?.items ?? [];
-	state.tableConfig.reportList = data.result.tableColumns;
-	state.tableConfig.reportList.columns = state.tableConfig.reportList.columns.filter((item:any)=>item.type!==1);
+	let tmp = data.result?.list?.items ?? [];
+	tmp = tmp.map((item: any) => {
+		item.xiangguantupian = transformImgData(item.xiangguantupian);
+		item.thumb = item.xiangguantupian[0];
+		return item;
+	});
+	state.reportListData = tmp;
+	state.tableConfig.reportListData = data.result.tableColumns;
+	state.tableConfig.reportListData.columns =
+		state.tableConfig.reportListData.columns.filter(
+			(item: any) => item.type !== 1
+		);
 };
-//言
+//言事口
 const questionsAndAnswersList = async () => {
 	let query = {
 		page: 1,
@@ -670,7 +675,10 @@ const questionsAndAnswersList = async () => {
 	);
 	state.questionListData = data.result?.list?.items ?? [];
 	state.tableConfig.questionList = data.result.tableColumns;
-	state.tableConfig.questionList.columns = state.tableConfig.questionList.columns.filter((item:any)=>item.type!==1);
+	state.tableConfig.questionList.columns =
+		state.tableConfig.questionList.columns.filter(
+			(item: any) => item.type !== 1
+		);
 };
 //诚议统计
 const getArgumentAmount = async () => {
@@ -689,23 +697,26 @@ const getArgumentList = async () => {
 	const { data } = await getAPI(LargeScreenApi).civilList(query);
 	state.argumentListData = data.result?.list?.items ?? [];
 	state.tableConfig.argumentList = data.result.tableColumns;
-	state.tableConfig.argumentList.columns = state.tableConfig.argumentList.columns.filter((item:any)=>item.type!==1);
+	state.tableConfig.argumentList.columns =
+		state.tableConfig.argumentList.columns.filter(
+			(item: any) => item.type !== 1
+		);
 };
 
-// 开诚布公统计
+// 开诚布公集体经济
 const getEconomyTotal = async () => {
 	const { data } = await getAPI(LargeScreenApi).economyTotal({
 		id: state.id,
 	});
 	state.economyTotal = data.result ?? {};
 };
-const getEconomyItemData = async()=>{
+const getEconomyItemData = async () => {
 	const { data } = await getAPI(LargeScreenApi).economyItemData({
 		id: state.id,
 	});
 	let tmp = data.result ?? [];
 	state.economyItemData = tmp;
-}
+};
 //志愿者
 const getVolunteerList = async () => {
 	const { data } = await getAPI(LargeScreenApi).volunteerList({
@@ -716,10 +727,12 @@ const getVolunteerList = async () => {
 	let tmp = data.result?.list?.items ?? [];
 	state.volunteerList = tmp;
 	state.tableConfig.volunteerList = data.result.tableColumns;
-		state.tableConfig.volunteerList.columns = state.tableConfig.volunteerList.columns.filter((item:any)=>item.type!==1);
-
+	state.tableConfig.volunteerList.columns =
+		state.tableConfig.volunteerList.columns.filter(
+			(item: any) => item.type !== 1
+		);
 };
-// 总排行
+//总排行
 const getTotalRanking = async () => {
 	const { data } = await getAPI(LargeScreenApi).overallRanking({
 		id: state.id,
@@ -733,12 +746,11 @@ const getTotalRanking = async () => {
 		return item;
 	});
 	state.totalRankingTop = tmp.slice(0, 3);
-	state.totalRankingOther = tmp.slice(3);
-
+	state.totalRankingOther = tmp.slice(3,10);
 	state.rankingTop = state.totalRankingTop;
 	state.rankingOther = state.totalRankingOther;
 };
-// 月排行
+//月排行
 const getMonthRanking = async () => {
 	const { data } = await getAPI(LargeScreenApi).rankingByMonth({
 		id: state.id,
@@ -752,9 +764,9 @@ const getMonthRanking = async () => {
 		return item;
 	});
 	state.monthRankingTop = tmp.slice(0, 3);
-	state.monthRankingOther = tmp.slice(3);
+	state.monthRankingOther = tmp.slice(3,10);
 };
-// 切换排行
+//切换排行
 const clickRankingTag = (tag: String) => {
 	state.rankingTag = tag;
 	if (tag == "总排行") {
@@ -765,20 +777,23 @@ const clickRankingTag = (tag: String) => {
 		state.rankingOther = state.monthRankingOther;
 	}
 };
-// 列表弹窗
-const openTableDialog = (tableConfig: any, title: String, tableParams?: Object|undefined) => {
+//列表弹窗
+const openTableDialog = (
+	tableConfig: any,
+	title: String,
+	tableParams?: Object | undefined
+) => {
 	if (tableConfig) {
 		tableDialogRef?.value.openDialog(tableConfig, title, tableParams);
 	}
 };
-// 详情弹窗
-const openDetail = (tableConfig: any, row : any) => {
-	if (tableConfig) 
-	detailDialogRef?.value.openDialog(tableConfig, row);
+//详情弹窗
+const openDetail = (tableConfig: any, row: any) => {
+	console.log("row",tableConfig,row);
+	if (tableConfig) detailDialogRef?.value.openDialog(tableConfig, row);
 };
-// 我要质疑弹窗
+//我要发言
 const openQuestionFrom = () => {
-	console.log("弹窗");
 	// let tableInfo = getTableConfig(state.id);
 	questionFormDialogRef.value?.openDialog();
 };
@@ -789,6 +804,97 @@ const showViewer = (pic: any) => {
 const closeViewer = () => {
 	state.isViewer = false;
 	state.pics = [];
+};
+// 大屏按contain显示
+const initScreen = () => {
+	//基准宽高
+	let baseWidth = 1920;
+	let baseHeight = 1080;
+	//基准宽高比例
+	let ratio = baseWidth / baseHeight;
+	//基准缩放比例
+	let scale = 1;
+	//当前可视宽高
+	let viewWidth = window.innerWidth;
+	let viewHeight = window.innerHeight;
+	// 宽大于高(以高为标准,否则以宽为准)
+	let pageHeight = 0;
+	let pageWidth = 0;
+	if (viewWidth / viewHeight > ratio) {
+		pageHeight = viewHeight;
+		pageWidth = (baseWidth * pageHeight) / baseHeight;
+		scale = pageWidth / baseWidth;
+	} else {
+		pageWidth = viewWidth;
+		pageHeight = (pageWidth * baseHeight) / baseWidth;
+		scale = pageHeight / baseHeight;
+	}
+	//按比例缩放
+	let width = baseWidth;
+	let height = baseHeight;
+	let left = (viewWidth - baseWidth) / 2;
+	let top = (viewHeight - baseHeight) / 2;
+	let cale = scale;
+	// 指定宽度在区域内不按比例设置
+	if ((viewWidth < 2400) & (viewWidth >= 1920)) {
+		if (scale != 1) {
+			state.pageStyle = "";
+		}
+		return;
+	}
+	state.pageStyle = `position:absolute; width:${width}px;height:${height}px;transform:scale(${scale});top:${top}px;left:${left}px;`;
+};
+//获取第一张图片
+const getImg = (jsonStr: String) => {
+	if (!jsonStr) return false;
+	let json = JSON.parse(jsonStr);
+	if (json.length && json[0]?.url) {
+		return "/" + json[0].url;
+	}
+};
+//图片数据转换
+const transformImgData = (imgString: string) => {
+	let imgs = [] as any;
+	if (imgString) {
+		let json = JSON.parse(imgString);
+		if (json.length && json[0]?.url) {
+			json = json.map((item: any) => {
+				return APIURL + item.url;
+			});
+			imgs = json;
+		} else {
+			imgs = ["/@/assets/images/community/nonews.jpg"];
+		}
+	}
+	return imgs;
+};
+//二维码
+const initQrcode = async () => {
+	const qrUrl = window.location.href;
+	console.log("qrUrl", qrUrl);
+	new QRCode(QRCodeRef.value, {
+		text: `${encodeURI(qrUrl)}`,
+		width: 60,
+		height: 60,
+		colorDark: "#000",
+		colorLight: "#ffffff",
+	});
+};
+// 时钟
+const getPageDate = () => {
+	setInterval(() => {
+		let now = new Date();
+		let date = {
+			year: now.getFullYear(),
+			month: ("0" + (now.getMonth() + 1)).substr(-2),
+			day: ("0" + now.getDate()).substr(-2),
+			hour: ("0" + now.getHours()).substr(-2),
+			minute: ("0" + now.getMinutes()).substr(-2),
+			second: ("0" + now.getSeconds()).substr(-2),
+			week: "日一二三四五六".split("")[now.getDay()],
+		};
+		state.pageDate = { ...date };
+	}, 1000);
 };
 </script>
 
@@ -801,6 +907,11 @@ body,
 #app {
 	height: 100%;
 	overflow: hidden;
+}
+body {
+	background: url("/@/assets/images/community/bg.jpg");
+	background-size: 100% 100%;
+	background-color: #123f53;
 }
 </style>
 <style lang="scss" scoped>
@@ -822,7 +933,6 @@ div {
 	box-sizing: border-box;
 	background: url("/@/assets/images/community/bg.jpg");
 	background-size: 100% 100%;
-	background-attachment: fixed;
 	background-color: #10141a;
 	font-size: 14px;
 	color: var(--main-primary-color);
@@ -865,7 +975,20 @@ div {
 	-webkit-background-clip: text;
 	-webkit-text-fill-color: transparent;
 }
-
+.ellipsis {
+	display: -webkit-box;
+	-webkit-line-clamp: 1;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.ellipsis-2 {
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
 // 渐变色变量
 @mixin gradientColor {
 	background-image: linear-gradient(
@@ -978,11 +1101,36 @@ div {
 		font-size: 14px;
 		color: #42aabc;
 	}
-	.date {
+	.date-bar {
 		position: absolute;
 		top: 20px;
 		left: 30px;
 		color: var(--main-primary-color);
+		text-align: left;
+		display: flex;
+		align-items: center;
+		color: #fff;
+		& > div {
+			border-right: 1px #fff dotted;
+			padding-right: 10px;
+		}
+		.date {
+			font-size: 18px;
+			.num {
+				line-height: 1;
+				font-size: 20px;
+			}
+		}
+		.time {
+			text-align: center;
+			.num {
+				line-height: 1;
+				color: #dba139;
+			}
+		}
+		.week {
+			margin-left: 10px;
+		}
 	}
 	.weather {
 		position: absolute;
@@ -990,6 +1138,19 @@ div {
 		right: 30px;
 		display: flex;
 		align-items: center;
+		.weather-address {
+			position: absolute;
+			top: 8px;
+			left: 0;
+			width: 110px;
+			text-align: center;
+			background: #10141a;
+			border-radius: 10px;
+			color: #fff;
+		}
+	}
+	.qrcode {
+		border: 3px #fff solid;
 	}
 }
 // 内容框架
@@ -1021,7 +1182,7 @@ div {
 		flex-direction: column;
 	}
 }
-//简介
+//诚列史
 .about {
 	:deep(.el-carousel__indicators--horizontal) {
 		bottom: initial;
@@ -1036,7 +1197,6 @@ div {
 	text-indent: 2em;
 	overflow-y: auto;
 }
-
 .about-amount-layer {
 	position: absolute;
 	z-index: 2;
@@ -1059,7 +1219,7 @@ div {
 		font-size: 24px;
 	}
 }
-//问答
+//言事口
 .question-card {
 	overflow: hidden;
 	.question-list {
@@ -1159,7 +1319,6 @@ div {
 			no-repeat;
 		background-size: 100% 100%;
 		li {
-			
 			padding: 5px 8px;
 			font-size: 12px;
 			margin-top: 2px;
@@ -1180,7 +1339,6 @@ div {
 				line-height: 1;
 				font-style: normal;
 				margin-right: 2px;
-				// @include gradientColor()
 			}
 		}
 	}
@@ -1191,17 +1349,17 @@ div {
 	justify-content: space-between;
 }
 .public-news-box {
+	width: calc(33.33% - 20px);
 	flex-grow: 1;
 	padding: 10px;
 	margin: 10px 10px 0 10px;
 	background: rgba(9, 21, 25, 0.4);
-
 	.news {
 		position: relative;
 	}
-
 	.class-title {
 		position: absolute;
+		z-index: 2;
 		width: 100%;
 		left: 0;
 		top: 0;
@@ -1253,7 +1411,6 @@ div {
 				width: 15px;
 				height: 6px;
 			}
-			// el-carousel__indicator el-carousel__indicator--horizontal is-active
 			.is-active {
 				button {
 					width: 25px;
@@ -1327,7 +1484,6 @@ div {
 		}
 	}
 }
-
 .money-box {
 	display: flex;
 	flex-wrap: wrap;
@@ -1360,7 +1516,7 @@ div {
 		no-repeat;
 }
 .plate4 {
-	background-size: 144px auto;
+	background-size: 100% auto;
 	background: url("/@/assets/images/community/plate4.png") center bottom
 		no-repeat;
 }
@@ -1396,31 +1552,6 @@ div {
 				text-overflow: ellipsis; /* 使用省略号表示文本被截断 */
 				width: 200px;
 			}
-		}
-	}
-
-	:deep(.el-descriptions) {
-		.el-descriptions__body {
-			background: none;
-		}
-		.el-descriptions__header {
-			margin-bottom: 2px;
-		}
-		.el-descriptions__content {
-			background: #133139;
-			color: #fff;
-			border-color: #fff;
-		}
-		.el-descriptions__title {
-			font-size: 16px;
-			color: #96f7f7;
-		}
-		.el-descriptions__label {
-			width: 64px;
-			border: transparent;
-		}
-		.el-descriptions__label.el-descriptions__cell.is-bordered-label {
-			background: #0b2127;
 		}
 	}
 }
@@ -1461,21 +1592,21 @@ div {
 		justify-content: space-between;
 		align-items: center;
 		.ranking-num {
-			width: 24px;
+			width: 32px;
 			display: inline-block;
 			color: #fff;
 			text-align: center;
 		}
 		.cup-img {
-			width: 24px;
-			height: 24px;
+			width: 32px;
+			height: 32px;
 		}
 		.head-img {
 			width: 50px;
 			height: 50px;
 			border-radius: 5px;
-			margin-left: 10px;
-			margin-right: 10px;
+			margin-left: 5px;
+			margin-right: 5px;
 		}
 		.error-img {
 			width: 50px;
@@ -1498,13 +1629,13 @@ div {
 .report-news-card {
 	overflow: hidden;
 }
-//
 .report-news {
 	li {
 		display: flex;
 		margin: 10px 0;
 		color: #fff;
 		.imgbox {
+			flex-shrink: 0;
 			width: 100px;
 			height: 66px;
 			padding: 7px;
@@ -1527,14 +1658,6 @@ div {
 	}
 }
 
-// 大屏
-@media screen and (max-width: 2268px) {
-}
-// 正常屏
-@media screen and (max-width: 1920px) {
-	.screen-page {
-	}
-}
 // 移动端
 @media screen and (max-width: 768px) {
 	html,
@@ -1553,7 +1676,7 @@ div {
 		.header {
 			background-position: top;
 			background-size: 130% 100%;
-			.date,
+			.date-bar,
 			.weather {
 				display: none;
 			}
@@ -1587,8 +1710,16 @@ div {
 	.argument-card {
 		height: 350px;
 	}
+	.company-box {
+		.item {
+			max-width: 50%;
+		}
+	}
 	.public-news-card {
 		flex-direction: column;
+	}
+	.public-news-box {
+		width: calc(100% - 20px);
 	}
 	.h5-column {
 		flex-direction: column;
@@ -1601,6 +1732,7 @@ div {
 	}
 	.total-box .item {
 		flex-basis: 100%;
+		padding-bottom: 60px;
 	}
 	.public-card {
 		background: none;
