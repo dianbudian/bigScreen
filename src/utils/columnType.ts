@@ -1,5 +1,10 @@
 
-const UPLOAD_URL = window.__env__?.VITE_UPLOAD_URL ?? 'https://xjly.hbzg.cn';
+// let UPLOAD_URL = 'https://xjly.hbzg.cn';
+// if (window.__env__?.VITE_UPLOAD_URL) { 
+// 	UPLOAD_URL = window.__env__?.VITE_UPLOAD_URL;
+// }
+const UPLOAD_URL = window.__env__?.VITE_UPLOAD_URL;
+
 
 //是否为上传文件
 export const isUpload = (v: String) => {
@@ -51,7 +56,11 @@ export const fixedUploadURL = (imgs: Array<any>) => {
 		}
 		//非网络路径添加网址
 		return imgs.map((item: any) => {
-			return UPLOAD_URL + item?.url ?? item;
+			if (item?.url) {
+				return UPLOAD_URL + item?.url;
+			} else { 
+				return UPLOAD_URL + item;
+			}
 		});
 	}
 	return [];
