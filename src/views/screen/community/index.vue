@@ -49,7 +49,7 @@
 						<!-- 图片滚动 -->
 						<el-carousel class="about" height="250px" :interval="3000" arrow="always">
 							<el-carousel-item v-for="(item, index) in state.introduce.picture" :key="index">
-								<img class="img" :src="item" style="width:100%;height: 100%; object-fit:cover" @click="showViewer(state.introduce.picture)" />
+								<img class="img" :data-img="item" :data-loading="true" style="width:100%;height: 100%; object-fit:cover" @click="showViewer(state.introduce.picture)" />
 							</el-carousel-item>
 							<ul class="about-amount-layer">
 								<li>
@@ -80,12 +80,15 @@
 							<h2 class="card-title position-relative z-index-up">{{state.title}}“诚”报</h2>
 							<h2 class="card-title title-shadow">{{state.title}}“诚”报</h2>
 						</div>
+						<div>
+							<a class="more" href="javascript:;" @click="openTableDialog(state.tableConfig.reportListData,`${state.title}“诚”报`,{})">更多</a>
+						</div>
 					</div>
 					<div class="card-body">
 						<vue3-seamless-scroll ref="reportNewsRef" :list="state.reportListData" :singleHeight="0" :step="0.5" :hover="true" :limitScrollNum="3" class="seamless-wrap">
 							<ul class="report-news">
 								<li v-for="(item,index) in state.reportListData" :key="index">
-									<el-image fit="cover" class="imgbox" :src="item.thumb" @click="showViewer([item.thumb])">
+									<el-image fit="cover" class="imgbox" :src="item.thumb" :preview-src-list="[item.thumb]" :preview-teleported="true">
 										<template #error>
 											<img src="/@/assets/images/community/nonews.jpg" class="error-img" />
 										</template>
@@ -162,17 +165,21 @@
 							<!-- 党务 -->
 							<div class="public-news-box">
 								<el-carousel height="150px" :interval="3000" arrow="always" indicator-position="outside">
-									<div class="class-title" @click="openTableDialog(state.tableConfig.openInfoList,'党务公开',{type:'党务'})">党务公开</div>
+									<div
+										class="class-title"
+										@click="openTableDialog(state.tableConfig.openInfoList,'党务公开',{conditions:[{'fieldName': 'gongkaileixing',
+      'condition': 0,'fieldValue': '党务','isValueField': true}]})"
+									>党务公开</div>
 									<el-carousel-item v-for="(item,index) in state.openList1" :key="index">
 										<div class="news">
 											<!-- <img class="img" :src="item.thumb" @click="showViewer(item.xinxifujian)" /> -->
-											<el-image fit="cover" class="img" :src="item.thumb" @click="showViewer([item.xinxifujian])">
+											<el-image fit="cover" class="img" :src="item.thumb" lazy :preview-src-list="item.xinxifujian" :preview-teleported="true">
 												<template #error>
 													<img src="/@/assets/images/community/nonews.jpg" class="error-img" />
 												</template>
 											</el-image>
 											<div>
-												<p class="title ellipsis-2">{{item.xinxibiaoti}}</p>
+												<p class="title ellipsis-2" @click="openDetail(state.tableConfig.openInfoList, item)">{{item.xinxibiaoti}}</p>
 												<p class="info">{{item.gongkaishijian}}</p>
 											</div>
 										</div>
@@ -182,16 +189,20 @@
 							<!-- 财务 -->
 							<div class="public-news-box">
 								<el-carousel height="150px" :interval="3000" arrow="always" indicator-position="outside">
-									<div class="class-title" @click="openTableDialog(state.tableConfig.openInfoList,'财务公开',{type:'财务'})">财务公开</div>
+									<div
+										class="class-title"
+										@click="openTableDialog(state.tableConfig.openInfoList,'财务公开',{conditions:[{'fieldName': 'gongkaileixing',
+      'condition': 0,'fieldValue': '财务','isValueField': true}]})"
+									>财务公开</div>
 									<el-carousel-item v-for="(item,index) in state.openList2" :key="index">
 										<div class="news">
-											<el-image fit="cover" class="img" :src="item.thumb" @click="showViewer([item.xinxifujian])">
+											<el-image fit="cover" class="img" :src="item.thumb" lazy :preview-src-list="item.xinxifujian" :preview-teleported="true">
 												<template #error>
 													<img src="/@/assets/images/community/nonews.jpg" class="error-img" />
 												</template>
 											</el-image>
 											<div>
-												<p class="title ellipsis-2">{{item.xinxibiaoti}}</p>
+												<p class="title ellipsis-2" @click="openDetail(state.tableConfig.openInfoList, item)">{{item.xinxibiaoti}}</p>
 												<p class="info">{{item.gongkaishijian}}</p>
 											</div>
 										</div>
@@ -201,16 +212,20 @@
 							<!-- 村务 -->
 							<div class="public-news-box">
 								<el-carousel height="150px" :interval="3000" arrow="always" indicator-position="outside">
-									<div class="class-title" @click="openTableDialog(state.tableConfig.openInfoList,'村务公开',{type:'村务'})">村务公开</div>
+									<div
+										class="class-title"
+										@click="openTableDialog(state.tableConfig.openInfoList,'村务公开',{conditions:[{'fieldName': 'gongkaileixing',
+      'condition': 0,'fieldValue': '村务','isValueField': true}]})"
+									>村务公开</div>
 									<el-carousel-item v-for="(item,index) in state.openList3" :key="index">
 										<div class="news">
-											<el-image fit="cover" class="img" :src="item.thumb" @click="showViewer([item.xinxifujian])">
+											<el-image fit="cover" class="img" :src="item.thumb" lazy loading="lazy" :preview-src-list="item.xinxifujian" :preview-teleported="true">
 												<template #error>
 													<img src="/@/assets/images/community/nonews.jpg" class="error-img" />
 												</template>
 											</el-image>
 											<div>
-												<p class="title ellipsis-2">{{item.xinxibiaoti}}</p>
+												<p class="title ellipsis-2" @click="openDetail(state.tableConfig.openInfoList, item)">{{item.xinxibiaoti}}</p>
 												<p class="info">{{item.gongkaishijian}}</p>
 											</div>
 										</div>
@@ -226,6 +241,9 @@
 						<div class="position-relative">
 							<h2 class="card-title position-relative z-index-up">民事“诚”议</h2>
 							<h2 class="card-title title-shadow">民事“诚”议</h2>
+						</div>
+						<div>
+							<a class="more" href="javascript:;" @click="openTableDialog(state.tableConfig.argumentList,`民事“诚”议`,{})">更多</a>
 						</div>
 					</div>
 					<div class="card-body flex h5-column">
@@ -263,7 +281,7 @@
 							<ul class="argument-list">
 								<li v-for="(item,index) in state.argumentListData" :key="index">
 									<div class="main">
-										<p class="title ellipsis-2"  @click="openDetail(state.tableConfig.argumentList, item)">{{item.yiti}}</p>
+										<p class="title ellipsis-2" @click="openDetail(state.tableConfig.argumentList, item)">{{item.yiti}}</p>
 										<el-text class="date" type="info" size="small">{{item.CreateTime}}</el-text>
 									</div>
 									<el-text class="state" :type="item.yitizhuangtai=='已决议'?'success':'danger'">{{item.yitizhuangtai}}</el-text>
@@ -312,7 +330,7 @@
 								<el-carousel height="106px" :interval="3000" arrow="hover" indicator-position="none">
 									<el-carousel-item v-for="(item,index) in state.volunteerList" :key="index">
 										<ul>
-											<li>
+											<li @click="openTableDialog(state.tableConfig.volunteerList,'志愿者队伍',{})">
 												<span class="label">队伍名称</span>
 												<div class="content">
 													<el-tooltip effect="dark" :content="item.duiwumingcheng" placement="top-start">{{item.duiwumingcheng}}</el-tooltip>
@@ -356,7 +374,7 @@
 							</div>-->
 						</div>
 						<!-- 排行 -->
-						<div class="flex flex-column h5-mt20" style="min-width: 210px" v-if="!($isMobile && !state.rankingTop.length)">
+						<div class="flex flex-column h5-mt20" style="min-width: 210px">
 							<!-- 排行标题 -->
 							<div class="ranking-title-bar">
 								信义币
@@ -372,7 +390,7 @@
 								<div class="item" v-for="(item,index) in state.rankingTop" :key="index">
 									<span class="flex flex-ai-center title">
 										<el-image :src="item['icon']" fit="contain" class="cup-img"></el-image>
-										<el-image fit="contain" class="head-img" @click="showViewer([item.headPortrait])">
+										<el-image fit="contain" class="head-img" :src="item.headPortrait" lazy :preview-src-list="[item.headPortrait]" :preview-teleported="true">
 											<template #error>
 												<img src="/@/assets/images/community/nohead.png" class="error-img" />
 											</template>
@@ -389,7 +407,7 @@
 										<div class="item" v-for="(item,index) in state.rankingOther" :key="index">
 											<span class="flex flex-ai-center title">
 												<el-text class="ranking-num">{{index+4}}</el-text>
-												<el-image fit="contain" class="head-img" @click="showViewer([item.headPortrait])">
+												<el-image fit="contain" class="head-img" :src="item.headPortrait" lazy :preview-src-list="[item.headPortrait]" :preview-teleported="true">
 													<template #error>
 														<img src="/@/assets/images/community/nohead.png" class="error-img" />
 													</template>
@@ -411,8 +429,8 @@
 							<h2 class="card-title title-shadow">“诚”心言事口</h2>
 						</div>
 						<div>
-							<!-- <a class="more" href="javascript:;" @click="openQuestionFrom()">我要提问</a> -->
-							<a class="more" href="javascript:;" @click="openTableDialog(state.tableConfig.questionList,'“诚”心言事口')">更多</a>
+							<a class="more" href="javascript:;" @click="openQuestionFrom()">我要提问</a>
+							<a class="more" href="javascript:;" @click="openTableDialog(state.tableConfig.questionList,'“诚”心言事口',{})">更多</a>
 						</div>
 					</div>
 					<div class="card-body">
@@ -423,8 +441,8 @@
 									<div class="main">
 										<div class="title ellipsis-2">{{item.wentineirong}}</div>
 										<div class="date">{{item.CreateTime}}</div>
-										<p class="replay" v-if="item.huifuneirong.length > 0">回复：{{item.huifuneirong}}</p>
-										<el-text type="danger" size="small" v-if="item.huifuneirong.length < 1">[未回复]</el-text>
+										<p class="replay" v-if="item.huifuneirong?.length > 0">回复：{{item.huifuneirong}}</p>
+										<el-text type="danger" size="small" v-if="item.huifuneirong?.length < 1">[未回复]</el-text>
 									</div>
 								</li>
 							</ul>
@@ -442,7 +460,7 @@
 	<!-- 详情 -->
 	<DetailDialog ref="detailDialogRef"></DetailDialog>
 	<!-- 发起质疑 -->
-	<QuestionFormDialog ref="questionFormDialogRef"></QuestionFormDialog>
+	<QuestionFormDialog ref="questionFormDialogRef" @updateQuestion="updateQuestion"></QuestionFormDialog>
 </template>
 
 <script lang="ts" setup>
@@ -450,9 +468,13 @@ import { onMounted, reactive, ref, getCurrentInstance } from "vue";
 import { UserFilled } from "@element-plus/icons-vue";
 import { useRoute } from "vue-router";
 import { getAPI } from "/@/utils/request";
-import { isMobile } from "/@/utils/other";
-import { LargeScreenApi, WeatherApi } from "/@/api/sysApi";
 import QRCode from "qrcodejs2-fixes";
+import { LargeScreenApi, WeatherApi } from "/@/api/sysApi";
+import { isMobile, lazyImg } from "/@/utils/other";
+import getColumnType, {
+	getFirstImg,
+	transformUploadData,
+} from "/@/utils/columnType";
 
 import TableDialog from "../component/tableDialog.vue";
 import DetailDialog from "../component/detailDialog.vue";
@@ -467,7 +489,7 @@ const detailDialogRef = ref(null);
 const QRCodeRef = ref(null);
 const $isMobile = isMobile();
 
-const APIURL = "https://xjly.hbzg.cn";
+
 import rankTop1 from "/@/assets/images/community/rank_top1.png";
 import rankTop2 from "/@/assets/images/community/rank_top2.png";
 import rankTop3 from "/@/assets/images/community/rank_top3.png";
@@ -585,6 +607,7 @@ onMounted(() => {
 	getOpenList("党务");
 	getOpenList("财务");
 	getOpenList("村务");
+	// lazyImg(".public-news-box .img");
 	//志愿者
 	getVolunteerList();
 });
@@ -595,9 +618,11 @@ const getIntroduce = async () => {
 		id: state.id,
 	});
 	let tmp = data.result ?? {};
-	tmp.picture = transformImgData(tmp.picture);
+	tmp.picture = transformUploadData(tmp.picture);
 	state.introduce = tmp;
 	state.title = tmp.communityName;
+
+	lazyImg(".about .img", tmp.picture);
 	//meta-title
 	document.title = `${state.title}`;
 	state.weatherAddress = `https://widget.tianqiapi.com?style=tg&skin=pitaya&city=新津&color=fff`;
@@ -619,7 +644,7 @@ const getOpenList = async (tag: String) => {
 			(item: any) => item.type !== 1
 		);
 	tmp = tmp.map((item: any) => {
-		item.xinxifujian = transformImgData(item.xinxifujian);
+		item.xinxifujian = transformUploadData(item.xinxifujian);
 		item.thumb = item.xinxifujian[0];
 		return item;
 	});
@@ -652,7 +677,7 @@ const getReportList = async () => {
 	const { data } = await getAPI(LargeScreenApi).reportList(query);
 	let tmp = data.result?.list?.items ?? [];
 	tmp = tmp.map((item: any) => {
-		item.xiangguantupian = transformImgData(item.xiangguantupian);
+		item.xiangguantupian = transformUploadData(item.xiangguantupian);
 		item.thumb = item.xiangguantupian[0];
 		return item;
 	});
@@ -742,11 +767,11 @@ const getTotalRanking = async () => {
 	let tmp = data.result ?? [];
 	tmp = tmp.map((item: any, index: number) => {
 		item.icon = icons[index];
-		item.headPortrait = getImg(item.headPortrait);
+		item.headPortrait = getFirstImg(item.headPortrait);
 		return item;
 	});
 	state.totalRankingTop = tmp.slice(0, 3);
-	state.totalRankingOther = tmp.slice(3,10);
+	state.totalRankingOther = tmp.slice(3, 10);
 	state.rankingTop = state.totalRankingTop;
 	state.rankingOther = state.totalRankingOther;
 };
@@ -760,11 +785,11 @@ const getMonthRanking = async () => {
 	let tmp = data.result ?? [];
 	tmp = tmp.map((item: any, index: number) => {
 		item.icon = icons[index];
-		item.headPortrait = getImg(item.headPortrait);
+		item.headPortrait = getFirstImg(item.headPortrait);
 		return item;
 	});
 	state.monthRankingTop = tmp.slice(0, 3);
-	state.monthRankingOther = tmp.slice(3,10);
+	state.monthRankingOther = tmp.slice(3, 10);
 };
 //切换排行
 const clickRankingTag = (tag: String) => {
@@ -784,18 +809,25 @@ const openTableDialog = (
 	tableParams?: Object | undefined
 ) => {
 	if (tableConfig) {
+		if (tableParams) {
+			tableParams.id = state.id;
+		}
 		tableDialogRef?.value.openDialog(tableConfig, title, tableParams);
 	}
 };
 //详情弹窗
 const openDetail = (tableConfig: any, row: any) => {
-	console.log("row",tableConfig,row);
 	if (tableConfig) detailDialogRef?.value.openDialog(tableConfig, row);
 };
 //我要发言
 const openQuestionFrom = () => {
-	// let tableInfo = getTableConfig(state.id);
-	questionFormDialogRef.value?.openDialog();
+	questionFormDialogRef.value?.openDialog(
+		state.tableConfig.questionList,
+		state.id
+	);
+};
+const updateQuestion = () => {
+	questionsAndAnswersList();
 };
 const showViewer = (pic: any) => {
 	state.pics = pic;
@@ -844,34 +876,10 @@ const initScreen = () => {
 	}
 	state.pageStyle = `position:absolute; width:${width}px;height:${height}px;transform:scale(${scale});top:${top}px;left:${left}px;`;
 };
-//获取第一张图片
-const getImg = (jsonStr: String) => {
-	if (!jsonStr) return false;
-	let json = JSON.parse(jsonStr);
-	if (json.length && json[0]?.url) {
-		return "/" + json[0].url;
-	}
-};
-//图片数据转换
-const transformImgData = (imgString: string) => {
-	let imgs = [] as any;
-	if (imgString) {
-		let json = JSON.parse(imgString);
-		if (json.length && json[0]?.url) {
-			json = json.map((item: any) => {
-				return APIURL + item.url;
-			});
-			imgs = json;
-		} else {
-			imgs = ["/@/assets/images/community/nonews.jpg"];
-		}
-	}
-	return imgs;
-};
+
 //二维码
 const initQrcode = async () => {
 	const qrUrl = window.location.href;
-	console.log("qrUrl", qrUrl);
 	new QRCode(QRCodeRef.value, {
 		text: `${encodeURI(qrUrl)}`,
 		width: 60,

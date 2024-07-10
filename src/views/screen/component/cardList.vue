@@ -2,9 +2,9 @@
 	<!-- 表单卡片列表 -->
 	<div>
 		<el-card class="mobile-card-item" v-for="item in tableData" :key="item.id">
-			<div class="field-item" v-for="(column, columnIndex) in columnParams??[]" :key="columnIndex" :style="styleCoums(item,columnIndex)">
-				<el-text type="info" class="field-title">{{ column.title }}：</el-text>
-				<div class="field-value" style="color:#fff">{{item[column.key]||'--'}}</div>
+			<div class="field-item" v-for="(col, columnIndex) in columnParams??[]" :key="columnIndex" :style="styleCoums(item,columnIndex)">
+				<el-text type="info" class="field-title">{{ col.name }}：</el-text>
+				<FiedViewer :row="item" :value="item[col.column]" style="color: #fff"></FiedViewer>
 			</div>
 			<template #footer v-if="columnParams?.length > 10">
 				<div class="text-center" :style="{ color: item.isToggle ? 'var(--el-color-info)' : 'var(--el-color-primary)' }" @click="handleToggle(item)">
@@ -17,6 +17,8 @@
 </template>
 <script lang="ts" setup>
 import { onMounted, watch, reactive } from 'vue';
+import FiedViewer from "../../components/fieldViewer/fieldViewer.vue";
+
 const props = defineProps({
 	//表单卡片数据
 	tableData: {

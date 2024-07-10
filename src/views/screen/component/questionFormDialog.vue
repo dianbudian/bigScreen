@@ -8,15 +8,15 @@
 			</template>
 			<el-form ref="ruleFormRef" :model="state.formData" label-width="auto" style="max-width: 600px">
 				<el-form-item label="姓名" label-width="120">
-					<el-input v-model="state.formData.xingming" placeholder="请输入姓名" />
+					<el-input v-model="state.formData.name" placeholder="请输入姓名" />
 				</el-form-item>
 				<el-form-item label="联系电话" label-width="120">
-					<el-input v-model="state.formData.lianxidianhua" placeholder="请输入联系电话" />
+					<el-input v-model="state.formData.phone" placeholder="请输入联系电话" />
 				</el-form-item>
-				<el-form-item label="质疑内容" prop="neirong"  label-width="120" :rules="[
+				<el-form-item label="质疑内容" prop="content" label-width="120" :rules="[
 							{ required: true, message: '内容必填', trigger: 'blur', }
 						]">
-					<el-input type="textarea" v-model="state.formData.neirong" :rows="5" placeholder="请输入内容" />
+					<el-input type="textarea" v-model="state.formData.content" :rows="5" placeholder="请输入内容" />
 				</el-form-item>
 				<el-form-item>
 					<div class="flex flex-jc-center w100 mt10">
@@ -42,37 +42,26 @@ import {
 import { ElMessageBox, ElMessage } from "element-plus";
 import { UserFilled } from "@element-plus/icons-vue";
 import { useRoute, useRouter } from "vue-router";
-// import { debounce } from 'lodash';
 import { getAPI } from "/@/utils/request";
-import {
-	DiyReportApi,
-	DiyDataApi,
-	LargeScreenApi,
-	WeatherApi,
-	loadApi
-} from "/@/api/sysApi";
+import { LargeScreenApi } from "/@/api/sysApi";
 
+const emits = defineEmits("updateQuestion");
 const { proxy } = getCurrentInstance();
 const $isMobile = proxy.$isMobile;
 const ruleFormRef = ref(null);
 const state = reactive({
+	communityId: 0,
 	loading: false,
 	isShowDialog: false,
 	tableInfo: {} as any,
-	formData: { xingming: '', lianxidianhua: '', wentineirong: '' } as any,
+	formData: { name: "", phone: "", content: "" } as any,
 });
 onMounted(() => {});
 
-// banlizhuangtai: "已回复"
-// cunshequmingcheng: "[\"新津区\",\"花桥街道\",\"黄桷树社区\"]"
-// huifuneirong: "已联系自来水公司办理，自来水公司于6月接水管解决水压问题"
-// lianxidianhua: "13808208993"
-// wentineirong: "反映棉花沱小区3楼以上自来水水压不够，用水困难要求解决。"
-// xingming: "蔡家英"
-
-const openDialog = (tableInfo: any) => {
-	state.formData = { xingming: '', lianxidianhua: '', wentineirong: '' };
+const openDialog = (tableInfo: any, id: any) => {
+	state.formData = { name: "", phone: "", content: "" };
 	state.tableInfo = tableInfo;
+	state.communityId = id;
 	state.isShowDialog = true;
 };
 const closeDialog = () => {
@@ -85,33 +74,38 @@ const onSubmit = (formEl: any) => {
 		if (valid) {
 			saveQuestion();
 		} else {
-			ElMessage({ showClose: true, message: '内容必填', type: 'warning' });
+			ElMessage({
+				showClose: true,
+				message: "内容必填",
+				type: "warning",
+			});
 		}
 	});
 };
 
-const saveQuestion = async() => {
-	state.formData.huifuzhuangtai = '未回复';
+const saveQuestion = async () => {
 	let params = {
-		fields: {
-			...state.formData,
-			CreateUserId: 0,
-			CreateUserName: '无',
-		},
+		...state.formData,
+		id: state.communityId,
+		tableId: state.tableInfo.tableId,
 	};
 	state.loading = true;
 	//无登录新增
-	await getAPI(loadApi)
-		.diyTableData(state.tableInfo?.tableId, params)
+	await getAPI(LargeScreenApi)
+		.addQuestions(params)
 		.then((res) => {
 			const { data } = res;
 			if (data.code == 200) {
-				ElMessage({ showClose: true, message: '提交成功', type: 'success' });
+				ElMessage({
+					showClose: true,
+					message: "提交成功",
+					type: "success",
+				});
+				emits('updateQuestion');
 				closeDialog();
 			}
 			state.loading = false;
 		});
-	
 };
 
 // 导出对象

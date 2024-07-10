@@ -7,6 +7,7 @@
 </template>
 
 <script lang="ts">
+// v1暂未使用
 import { defineComponent } from "vue";
 
 export default defineComponent({

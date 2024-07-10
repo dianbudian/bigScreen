@@ -19,7 +19,7 @@ const alias: Record<string, string> = {
 
 export default defineConfig((mode: ConfigEnv) => {
 	const env = loadEnv(mode.mode, process.cwd());
-	console.log("env",env);
+	// console.log("env",env);
 	fs.writeFileSync('./public/config.js', `window.__env__ = ${JSON.stringify(env, null, 2)} `);
 	return {
 		plugins: [vue()],

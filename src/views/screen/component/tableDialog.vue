@@ -15,12 +15,12 @@
 			<el-table v-else ref="tableRef" v-loading="state.loading" element-loading-text="加载" :data="state.tableData" :border="true" height="700" fit highlight-current-row tooltip-effect="dark">
 				<el-table-column align="center" :label="col.name" v-for="(col,index) in state.tableInfo.columns" :key="index">
 					<template #default="scope">
-						<el-link type="primary" @click="openDetail(scope.row)" v-if="col?.link">{{dealField(scope.row[col.column], col)}}</el-link>
-						<div v-else>
-							<!-- 图片 -->
-							<img v-if="getColumnType(scope.row[col.column])=='img'" height="50" :src="getImg(scope.row[col.column])" @click="showViewer(transformImgData(scope.row[col.column]))" />
-							<span v-else>{{dealField(scope.row[col.column], col)}}</span>
-						</div>
+						<FiedViewer :row="scope.row[col.column]" :value="scope.row[col.column]"></FiedViewer>
+					</template>
+				</el-table-column>
+				<el-table-column align="center" label="查看" width="100">
+					<template #default="scope">
+						<el-link @click="openDetail(scope.row)">查看详情</el-link>
 					</template>
 				</el-table-column>
 			</el-table>
@@ -50,15 +50,20 @@ import {
 	defineAsyncComponent,
 } from "vue";
 import { getAPI } from "/@/utils/request";
+import { LargeScreenApi } from "/@/api/sysApi";
 import { isMobile } from "/@/utils/other";
-import { DiyDataApi, LargeScreenApi } from "/@/api/sysApi";
+import {
+	getColumnType,
+	getFirstImg,
+	transformUploadData,
+} from "/@/utils/columnType";
+
 const { proxy } = getCurrentInstance();
 const $isMobile = isMobile();
 const cardList = defineAsyncComponent(() => import("./cardList.vue"));
 const DetailDialog = defineAsyncComponent(() => import("./detailDialog.vue"));
 const detailDialogRef = ref(null);
-
-const APIURL = "https://xjly.hbzg.cn";
+import FiedViewer from "../../components/fieldViewer/fieldViewer.vue";
 
 const state = reactive({
 	loading: false,
@@ -82,28 +87,6 @@ const handleCurrentChange = (v: Number) => {
 	state.tableParams.page = v;
 	handleTable();
 };
-//获取第一张图片
-const getImg = (jsonStr: String) => {
-	if (!jsonStr) return false;
-	let json = JSON.parse(jsonStr);
-	if (json.length && json[0]?.url) {
-		return APIURL + json[0].url;
-	}
-};
-//图片数据转换
-const transformImgData = (imgString: string) => {
-	let imgs = [] as any;
-	if (imgString) {
-		let json = JSON.parse(imgString);
-		if (json.length && json[0]?.url) {
-			json = json.map((item: any) => {
-				return APIURL + item.url;
-			});
-			imgs = json;
-		}
-	}
-	return imgs;
-};
 const showViewer = (pics: any) => {
 	state.pics = pics;
 	state.isViewer = true;
@@ -111,23 +94,6 @@ const showViewer = (pics: any) => {
 const closeViewer = () => {
 	state.isViewer = false;
 	state.pics = [];
-};
-// 获取列类型
-const getColumnType = (v: any) => {
-	if (v === "" || v === undefined || v === null) {
-		return "text";
-	}
-	
-	if (v.includes("/Upload/") && v.includes("url")) {
-		if (
-			v.includes(".jpg") ||
-			v.includes(".png") ||
-			v.includes(".gif") ||
-			v.includes(".jpeg")
-		)
-			return "img";
-	}
-	return "text";
 };
 //字段脱敏
 const dealField = (v: any, col: any) => {
@@ -142,7 +108,6 @@ const dealField = (v: any, col: any) => {
 	if (v == 0 && col.key == "shichang") {
 		v = "--";
 	}
-
 	return v;
 };
 const openDetail = (row: any) => {
@@ -174,9 +139,7 @@ const closeDialog = () => {
 // 查询操作
 const handleTable = async () => {
 	state.loading = true;
-	const { data } = await getAPI(LargeScreenApi).PagePostByNoLogin(
-		state.tableParams
-	);
+	const { data } = await getAPI(LargeScreenApi).getPage(state.tableParams);
 	state.tableData = data.result?.items;
 	state.tableParams.total = data.result.total;
 	state.loading = false;

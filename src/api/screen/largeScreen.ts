@@ -1,12 +1,10 @@
-// import { BaseInputModel, BasePageModel, BaseListModel } from '../baseModel';
 import { BaseAPI } from '../baseApi';
-
-import request from '/@/utils/request';
 
 // 大屏数据
 export class LargeScreenApi extends BaseAPI {
 	constructor() {
-		super('/api/largeScreen');
+		// super('/api/largeScreen'); //v1
+		super('/api/Screen'); //v2
 	}
 	// 币总
 	public async integralTotal(body?: any) {
@@ -106,15 +104,32 @@ export class LargeScreenApi extends BaseAPI {
 		});
 	}
 	
-	
-
 	//无登录获取
-	public async PagePostByNoLogin(body?: any) {
-		return request({
-			url: 'http://119.4.191.22:801/api/diyData/pageByNoLogin',
-			method: 'post',
-			data: body
-		})
+	// public async PagePostByNoLogin(body?: any) {
+	// 	return this.Other({
+	// 		url: 'http://119.4.191.22:801/api/diyData/pageByNoLogin',
+	// 		method: 'post',
+	// 		data: body
+	// 	})
+	// }
+	
+	//通用分页
+	public async getPage(body?: any) {
+		return this.Other({
+			url: this.apiPath + '/getPage',
+			method: 'POST',
+			data: body,
+		});
 	}
+	
+	//添加留言
+	public async addQuestions(body?: any) {
+		return this.Other({
+			url: this.apiPath + '/addQuestions',
+			method: 'POST',
+			data: body,
+		});
+	}
+	
 
 }

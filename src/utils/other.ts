@@ -86,7 +86,9 @@ export const lazyImg = (el: string, arr: EmptyArrayType) => {
 				v.target.src = img;
 				v.target.onload = () => {
 					io.unobserve(v.target);
-					arr[key]['loading'] = false;
+					if (arr[key]?.loading) { 
+						arr[key]['loading']	= false;
+					}
 				};
 			}
 		});
