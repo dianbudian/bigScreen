@@ -11,6 +11,17 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  
+  
+  --main-default-color: #fff;
+	--main-primary-color: #c7feff;
+	--main-primary-color-2: #88feff;
+	--main-primary-color-3: #27acc6;
+
+	--main-sub-color: #f2b543;
+	--border-color: #123f53;
+  --dialog-border-color: #27acc6;
+  
 }
 
 a {
@@ -89,6 +100,12 @@ button:focus-visible {
 }
 .z-index-up {
   z-index: 100;
+}
+.w100 {
+  width: 100%;
+}
+.h100 {
+  height: 100%;
 }
 .mt5 {
   margin-top: 5%;

@@ -4,16 +4,16 @@
 			<template #header>
 				<div style="color: #fff; text-align:center">
 					<span v-if="state.pageTitle">{{state.pageTitle}}</span>
-					<span v-else>{{state.tableInfo.tableName}}</span>
+					<span v-else>{{state.tableInfo?.tableName}}</span>
 				</div>
 			</template>
 			<!-- 移动端卡片 -->
 			<div v-if="$isMobile">
-				<cardList :tableData="state.tableData" :columnParams="state.tableInfo.columns" />
+				<cardList :tableData="state.tableData" :columnParams="state.tableInfo?.columns" />
 			</div>
 			<!-- pc端Table -->
 			<el-table v-else ref="tableRef" v-loading="state.loading" element-loading-text="加载" :data="state.tableData" :border="true" height="700" fit highlight-current-row tooltip-effect="dark">
-				<el-table-column align="center" :label="col.name" v-for="(col,index) in state.tableInfo.columns" :key="index">
+				<el-table-column align="center" :label="col.name" v-for="(col,index) in state.tableInfo?.columns" :key="index">
 					<template #default="scope">
 						<FiedViewer :row="scope.row[col.column]" :value="scope.row[col.column]"></FiedViewer>
 					</template>
@@ -111,16 +111,24 @@ const dealField = (v: any, col: any) => {
 	return v;
 };
 const openDetail = (row: any) => {
-	detailDialogRef.value.openDialog(state.tableInfo, row);
+	let pageTitle = state.pageTitle ?? state.tableInfo?.tableName
+	detailDialogRef.value.openDialog(state.tableInfo, row,  pageTitle);
 };
 const openDialog = (
 	tableInfo: any,
 	title: String,
 	tableParams?: Object | undefined
 ) => {
-	tableInfo.columns = tableInfo.columns.filter(
-		(item: any) => item.type !== 1
+	//过滤字段
+	tableInfo.columns = tableInfo?.columns?.filter(
+		(item: any) => item.type !== 1 && item.column !='cunshequmingcheng'
 	);
+	//替换字段名
+	tableInfo.columns = tableInfo?.columns?.map((item:any)=>{
+		if(item.name=='事项标题' || item.name=='事项内容')
+		item.name = item.name.replace('事项','');
+		return item;
+	});
 	state.pageTitle = title;
 	state.tableInfo = tableInfo;
 	if (tableParams) {
@@ -170,10 +178,10 @@ defineExpose({ openDialog });
 .page {
 	:deep(.el-dialog) {
 		background-color: #141414;
-		border: 1px solid #27acc6;
+		border: 1px solid var(--dialog-border-color);
 		margin-top: 10vh;
 		.el-dialog__body {
-			border-top: 1px solid #27acc6;
+			border-top: 1px solid var(--dialog-border-color);
 		}
 		.el-dialog__footer {
 			background-color: #242424;

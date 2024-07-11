@@ -3,11 +3,11 @@
 		<el-dialog v-model="state.isShowDialog" :close-on-click-modal="false" :fullscreen="$isMobile?true:false" width="800" height="80%" @close="closeDialog">
 			<template #header>
 				<div style="color: #fff; text-align:center">
-					<span>详细内容</span>
+					<span>{{state.pageTitle}}</span>
 				</div>
 			</template>
 			<el-descriptions class="margin-top" :column="1" border label-class-name="label">
-				<el-descriptions-item v-for="(col,index) in state.tableInfo.columns" :key="index">
+				<el-descriptions-item v-for="(col,index) in state.tableInfo?.columns" :key="index">
 					<template #label>{{col.name}}</template>
 					
 					<FiedViewer :row="state.formData" :value="state.formData[col.column]"></FiedViewer>
@@ -35,6 +35,7 @@ const { proxy } = getCurrentInstance();
 const $isMobile = isMobile();
 
 const state = reactive({
+	pageTitle: '',
 	isShowDialog: false,
 	isViewer: false, //图片预览
 	loading: false,
@@ -55,7 +56,18 @@ const dealField = (v: any, sensitive: any) => {
 	}
 	return v;
 };
-const openDialog = (tableInfo: any, row: any) => {
+const openDialog = (tableInfo: any, row: any, pageTitle?: String) => {
+	state.pageTitle = pageTitle ?? '详细内容';
+	//过滤字段
+	tableInfo.columns = tableInfo?.columns?.filter(
+		(item: any) => item.type !== 1 && item.column !='cunshequmingcheng'
+	);
+	//替换字段名
+	tableInfo.columns = tableInfo?.columns?.map((item:any)=>{
+		if(item.name=='事项标题' || item.name=='事项内容')
+		item.name = item.name.replace('事项','');
+		return item;
+	});
 	state.tableInfo = tableInfo;
 	state.formData = row;
 	state.isShowDialog = true;
@@ -83,12 +95,13 @@ defineExpose({ openDialog });
 .page {
 	:deep(.el-dialog) {
 		background-color: #141414;
-		border: 1px solid #1ecfa1;
+		border: 1px solid var(--dialog-border-color);
 		.el-descriptions__label {
 			width: 120px;
+			flex-shrink: 0;
 		}
 		.el-dialog__body {
-			border-top: 1px solid #1ecfa1;
+			border-top: 1px solid var(--dialog-border-color);
 			padding: 0 !important;
 		}
 		.el-dialog__footer {

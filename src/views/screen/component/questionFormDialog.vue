@@ -3,10 +3,10 @@
 		<el-dialog v-model="state.isShowDialog" :close-on-click-modal="false" :fullscreen="$isMobile?true:false" width="600" height="80%" @close="closeDialog">
 			<template #header>
 				<div style="color: #fff; text-align:center">
-					<span>发起质疑</span>
+					<span>我要发言</span>
 				</div>
 			</template>
-			<el-form ref="ruleFormRef" :model="state.formData" label-width="auto" style="max-width: 600px">
+			<el-form ref="ruleFormRef" :model="state.formData" label-width="auto" style="max-width: 600px; margin-top:20px">
 				<el-form-item label="姓名" label-width="120">
 					<el-input v-model="state.formData.name" placeholder="请输入姓名" />
 				</el-form-item>
@@ -20,7 +20,7 @@
 				</el-form-item>
 				<el-form-item>
 					<div class="flex flex-jc-center w100 mt10">
-						<el-button type="primary" @click="onSubmit(ruleFormRef)">保存</el-button>
+						<el-button type="success" @click="onSubmit(ruleFormRef)">保存</el-button>
 						<el-button @click="closeDialog">取消</el-button>
 					</div>
 				</el-form-item>
@@ -127,9 +127,9 @@ defineExpose({ openDialog });
 .page {
 	:deep(.el-dialog) {
 		background-color: #141414;
-		border: 1px solid #1ecfa1;
+		border: 1px solid var(--dialog-border-color);
 		.el-dialog__body {
-			border-top: 1px solid #1ecfa1;
+			border-top: 1px solid var(--dialog-border-color);
 		}
 		.el-dialog__footer {
 			background-color: #242424;

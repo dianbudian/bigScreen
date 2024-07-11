@@ -3,7 +3,7 @@
 	<div class="screen-page">
 		<!-- 大标题 -->
 		<header class="header">
-			<b class="gradient-color screen-title">区级大屏管理</b>
+			<b class="gradient-color screen-title">新津区基层治理“诚”列馆</b>
 		</header>
 
 		<!-- 已选社区 -->

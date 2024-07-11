@@ -54,6 +54,7 @@ const styleCoums=(item:any,columnIndex:any)=>{
 	margin-top: 10px;
 }
 .field-item {
+	
 	display: flex;
 	justify-content: space-between;
 	padding: 5px 0;
@@ -62,6 +63,7 @@ const styleCoums=(item:any,columnIndex:any)=>{
 		border-top: none;
 	}
 	.field-title {
+		flex-shrink: 0;
 	}
 	.field-value {
 	}

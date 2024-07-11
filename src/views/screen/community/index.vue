@@ -38,7 +38,7 @@
 		<main class="main-container">
 			<!-- 左侧 -->
 			<div class="col-left">
-				<div class="card">
+				<div class="card about-card">
 					<div class="card-header">
 						<div class="position-relative">
 							<h2 class="card-title position-relative z-index-up">{{state.title}}“诚”列史</h2>
@@ -47,7 +47,7 @@
 					</div>
 					<div class="card-body">
 						<!-- 图片滚动 -->
-						<el-carousel class="about" height="250px" :interval="3000" arrow="always">
+						<el-carousel class="about" height="250px" :interval="3000" arrow="always" v-if="state.introduce.picture?.length">
 							<el-carousel-item v-for="(item, index) in state.introduce.picture" :key="index">
 								<img class="img" :data-img="item" :data-loading="true" style="width:100%;height: 100%; object-fit:cover" @click="showViewer(state.introduce.picture)" />
 							</el-carousel-item>
@@ -72,7 +72,6 @@
 						<!-- 党员列表 '没有文本介绍时' -->
 					</div>
 				</div>
-
 				<!--  -->
 				<div class="card mt20 report-news-card flex-grow" v-if="!($isMobile && !state.reportListData.length)">
 					<div class="card-header">
@@ -94,10 +93,11 @@
 										</template>
 									</el-image>
 									<div class="main">
-										<p class="title ellipsis-2" @click="openDetail(state.tableConfig.reportListData, item)">{{item.xiangguanneirong}}</p>
+										<p class="title ellipsis-2" @click="openDetail(state.tableConfig.reportListData, item, `${state.title}“诚”报`)">{{item.xiangguanneirong}}</p>
 										<p>
 											<el-text type="warning" size="small">[{{item.leixing}}]</el-text>
-											<el-text type="info" class="date" size="small">时间:</el-text>
+											<br />
+											<el-text type="info" class="date" size="small">时间：</el-text>
 											<small>{{item.fabushijian}}</small>
 										</p>
 									</div>
@@ -109,7 +109,7 @@
 			</div>
 			<!-- 中间 -->
 			<div class="col-main">
-				<div class="public-card">
+				<div class="public-card flex-grow">
 					<div class="card-header">
 						<div class="position-relative title-bg">
 							<h2 class="card-title position-relative z-index-up">开“诚”布公</h2>
@@ -119,52 +119,76 @@
 					<div class="card-body">
 						<div class="total-box">
 							<div class="item">
-								总收入
+								<p class="num gradient-color">{{state.economyTotal?.incomeTotal}}</p>总收入
 								<small>(元)</small>
-								<p class="num gradient-color">{{state.economyTotal?.incomeTotal}}</p>
 							</div>
 							<div class="item">
-								总支出
+								<p class="num gradient-color">{{state.economyTotal?.expensesTotal}}</p>总支出
 								<small>(元)</small>
-								<p class="num gradient-color">{{state.economyTotal?.expensesTotal}}</p>
 							</div>
 							<div class="item">
-								余额
+								<p class="num gradient-color">{{state.economyTotal?.balance}}</p>余额
 								<small>(元)</small>
-								<p class="num gradient-color">{{state.economyTotal?.balance}}</p>
 							</div>
 						</div>
 						<!--  -->
-						<div class="company-box">
-							<div class="item" v-for="(item,index) in state.economyItemData" :key="index">
-								<p class="gradient-color-2 center">{{item.accountType}}</p>
-								<ul>
-									<li>
-										<span>收入金额</span>
-										<span>
-											<em>{{item.incomeTotal}}</em>元
-										</span>
-									</li>
-									<li>
-										<span>支出金额</span>
-										<span>
-											<em>{{item.expensesTotal}}</em>元
-										</span>
-									</li>
-									<li>
-										<span>余 额</span>
-										<span>
-											<em>{{item.balance}}</em>元
-										</span>
-									</li>
-								</ul>
-							</div>
-						</div>
+						<el-carousel height="140px" :interval="5000" :autoplay="true" arrow="always" indicator-position="none" trigger="click" v-if="state.economyItemData?.length">
+							<el-carousel-item v-for="(itemGroup,groupIndex) in state.economyItemData" :key="groupIndex">
+								<div class="company-box">
+									<div class="item" v-for="(item,index) in itemGroup" :key="index">
+										<p class="gradient-color-2 center ellipsis">{{item.accountType}}</p>
+										<ul v-if="item.type==1">
+											<!-- <li
+											@click=""
+											>-->
+											<li @click="openEconomyDialog(1, item.accountType, '收入')">
+												<span>收入金额</span>
+												<span>
+													<em>{{item.incomeTotal}}</em>元
+												</span>
+											</li>
+											<li @click="openEconomyDialog(1, item.accountType, '支出')">
+												<span>支出金额</span>
+												<span>
+													<em>{{item.expensesTotal}}</em>元
+												</span>
+											</li>
+											<li @click="openEconomyDialog(1, item.accountType)">
+												<span>余 额</span>
+												<span>
+													<em>{{item.balance}}</em>元
+												</span>
+											</li>
+										</ul>
+										<ul v-if="item.type==2">
+											<li @click="openEconomyDialog(2, item.accountType)">
+												<span>入股户数</span>
+												<span>
+													<em>{{item.num}}</em>户
+												</span>
+											</li>
+											<li @click="openEconomyDialog(2, item.accountType)">
+												<span>入股金额</span>
+												<span>
+													<em>{{item.amount}}</em>元
+												</span>
+											</li>
+											<li @click="openEconomyDialog(2, item.accountType )">
+												<span>余 额</span>
+												<span>
+													<em>{{item.balance}}</em>元
+												</span>
+											</li>
+										</ul>
+									</div>
+								</div>
+							</el-carousel-item>
+						</el-carousel>
 						<!-- compnay-box end -->
-						<div class="public-news-card">
+						<div class="public-news-card flex-grow">
 							<!-- 党务 -->
 							<div class="public-news-box">
-								<el-carousel height="150px" :interval="3000" arrow="always" indicator-position="outside">
+								<el-carousel height="160px" :autoplay="true" :interval="3000" arrow="always" indicator-position="outside" v-if="state.openList1?.length">
 									<div
 										class="class-title"
 										@click="openTableDialog(state.tableConfig.openInfoList,'党务公开',{conditions:[{'fieldName': 'gongkaileixing',
@@ -178,8 +202,8 @@
 													<img src="/@/assets/images/community/nonews.jpg" class="error-img" />
 												</template>
 											</el-image>
-											<div>
-												<p class="title ellipsis-2" @click="openDetail(state.tableConfig.openInfoList, item)">{{item.xinxibiaoti}}</p>
+											<div class="text-box">
+												<p class="title ellipsis-2" @click="openDetail(state.tableConfig.openInfoList, item,'党务公开')">{{item.xinxibiaoti}}</p>
 												<p class="info">{{item.gongkaishijian}}</p>
 											</div>
 										</div>
@@ -188,7 +212,7 @@
 							</div>
 							<!-- 财务 -->
 							<div class="public-news-box">
-								<el-carousel height="150px" :interval="3000" arrow="always" indicator-position="outside">
+								<el-carousel height="160px" :autoplay="true" :interval="3000" arrow="always" indicator-position="outside" v-if="state.openList2?.length">
 									<div
 										class="class-title"
 										@click="openTableDialog(state.tableConfig.openInfoList,'财务公开',{conditions:[{'fieldName': 'gongkaileixing',
@@ -202,7 +226,7 @@
 												</template>
 											</el-image>
 											<div>
-												<p class="title ellipsis-2" @click="openDetail(state.tableConfig.openInfoList, item)">{{item.xinxibiaoti}}</p>
+												<p class="title ellipsis-2" @click="openDetail(state.tableConfig.openInfoList, item,'财务公开')">{{item.xinxibiaoti}}</p>
 												<p class="info">{{item.gongkaishijian}}</p>
 											</div>
 										</div>
@@ -211,7 +235,7 @@
 							</div>
 							<!-- 村务 -->
 							<div class="public-news-box">
-								<el-carousel height="150px" :interval="3000" arrow="always" indicator-position="outside">
+								<el-carousel height="160px" :autoplay="true" :interval="3000" arrow="always" indicator-position="outside" v-if="state.openList3?.length">
 									<div
 										class="class-title"
 										@click="openTableDialog(state.tableConfig.openInfoList,'村务公开',{conditions:[{'fieldName': 'gongkaileixing',
@@ -225,7 +249,7 @@
 												</template>
 											</el-image>
 											<div>
-												<p class="title ellipsis-2" @click="openDetail(state.tableConfig.openInfoList, item)">{{item.xinxibiaoti}}</p>
+												<p class="title ellipsis-2" @click="openDetail(state.tableConfig.openInfoList, item,'村务公开')">{{item.xinxibiaoti}}</p>
 												<p class="info">{{item.gongkaishijian}}</p>
 											</div>
 										</div>
@@ -281,8 +305,8 @@
 							<ul class="argument-list">
 								<li v-for="(item,index) in state.argumentListData" :key="index">
 									<div class="main">
-										<p class="title ellipsis-2" @click="openDetail(state.tableConfig.argumentList, item)">{{item.yiti}}</p>
-										<el-text class="date" type="info" size="small">{{item.CreateTime}}</el-text>
+										<p class="title ellipsis-2" @click="openDetail(state.tableConfig.argumentList, item,`民事“诚”议`)">{{item.yiti}}</p>
+										<el-text class="date" type="info" size="small">{{item.fabushijian}}</el-text>
 									</div>
 									<el-text class="state" :type="item.yitizhuangtai=='已决议'?'success':'danger'">{{item.yitizhuangtai}}</el-text>
 								</li>
@@ -293,7 +317,7 @@
 			</div>
 			<!-- 右侧 -->
 			<div class="col-right">
-				<div class="card">
+				<div class="card money-card">
 					<div class="card-header">
 						<div class="position-relative">
 							<h2 class="card-title position-relative z-index-up">信义“诚”折</h2>
@@ -327,10 +351,10 @@
 							<!-- 志愿者队伍 -->
 							<div class="volunteer">
 								<div class="volunteer-title">志愿者队伍</div>
-								<el-carousel height="106px" :interval="3000" arrow="hover" indicator-position="none">
+								<el-carousel height="178px" :autoplay="true" :interval="3000" arrow="always" indicator-position="none" v-if="state.volunteerList?.length">
 									<el-carousel-item v-for="(item,index) in state.volunteerList" :key="index">
-										<ul>
-											<li @click="openTableDialog(state.tableConfig.volunteerList,'志愿者队伍',{})">
+										<ul @click="openTableDialog(state.tableConfig.volunteerList,'志愿者队伍',{})">
+											<li>
 												<span class="label">队伍名称</span>
 												<div class="content">
 													<el-tooltip effect="dark" :content="item.duiwumingcheng" placement="top-start">{{item.duiwumingcheng}}</el-tooltip>
@@ -338,13 +362,13 @@
 											</li>
 											<li>
 												<span class="label">队伍组成</span>
-												<div class="content">
+												<div class="content ellipsis">
 													<el-tooltip effect="dark" :content="item.duiwuzucheng" placement="top-start">{{item.duiwuzucheng}}</el-tooltip>
 												</div>
 											</li>
 											<li>
 												<span class="label">服务内容</span>
-												<div class="content">
+												<div class="content ellipsis-5">
 													<el-tooltip effect="dark" :content="item.fuwuneirong" placement="top-start">{{item.fuwuneirong}}</el-tooltip>
 												</div>
 											</li>
@@ -352,41 +376,20 @@
 									</el-carousel-item>
 								</el-carousel>
 							</div>
-							<!-- 志愿内容 -->
-							<!-- <div class="volunteer">
-								<div class="volunteer-title">志愿内容</div>
-								<ul>
-									<li>
-										<span class="label">内容发布</span>
-										<div class="content">
-											<el-tooltip effect="dark" content="由退役军人组成的志愿服务队伍由退役军人组成的志愿服务队伍" placement="left-start">由退役军人组成的志愿服务队伍，以自由退役军人组成的志愿服务队伍</el-tooltip>
-										</div>
-									</li>
-									<li>
-										<span class="label">开始时间</span>
-										<div class="content">2024-06-28</div>
-									</li>
-									<li>
-										<span class="label">积分数量</span>
-										<div class="content">2</div>
-									</li>
-								</ul>
-							</div>-->
 						</div>
 						<!-- 排行 -->
 						<div class="flex flex-column h5-mt20" style="min-width: 210px">
 							<!-- 排行标题 -->
 							<div class="ranking-title-bar">
-								信义币
+								积分
 								<div class="ranking-tag-title">
 									<span :class="state.rankingTag == '总排行' ? 'active' : ''" @click="clickRankingTag('总排行')">总排行</span>
 									<span :class="state.rankingTag == '月排行' ? 'active' : ''" @click="clickRankingTag('月排行')">月排行</span>
 								</div>
 							</div>
-
 							<!-- 排行列表 -->
 							<!-- 前三名 -->
-							<div class="ranking">
+							<div class="ranking" @mouseover="stopChangeRanking" @mouseleave="autoChangeRanking">
 								<div class="item" v-for="(item,index) in state.rankingTop" :key="index">
 									<span class="flex flex-ai-center title">
 										<el-image :src="item['icon']" fit="contain" class="cup-img"></el-image>
@@ -397,11 +400,11 @@
 										</el-image>
 										{{item.name}}
 									</span>
-									<span class="num">{{item.total}}</span>
+									<span class="num" @click="openRankingDialog(item.name)">{{item.total}}</span>
 								</div>
 							</div>
 							<!-- 前三名后续 -->
-							<div class="flex-grow" style="height: 220px">
+							<div class="flex-grow" style="height: 210px">
 								<vue3-seamless-scroll ref="rankingRef" :list="state.rankingOther" :singleHeight="0" :step="0.3" :hover="true" :limitScrollNum="5" class="seamless-wrap">
 									<div class="ranking">
 										<div class="item" v-for="(item,index) in state.rankingOther" :key="index">
@@ -429,18 +432,18 @@
 							<h2 class="card-title title-shadow">“诚”心言事口</h2>
 						</div>
 						<div>
-							<a class="more" href="javascript:;" @click="openQuestionFrom()">我要提问</a>
+							<a class="more" href="javascript:;" @click="openQuestionFrom()">我要发言</a>
 							<a class="more" href="javascript:;" @click="openTableDialog(state.tableConfig.questionList,'“诚”心言事口',{})">更多</a>
 						</div>
 					</div>
 					<div class="card-body">
 						<vue3-seamless-scroll ref="questionRef" :list="state.questionListData" :singleHeight="0" :step="0.5" :hover="true" :limitScrollNum="3" class="seamless-wrap">
 							<ul class="question-list">
-								<li v-for="(item,index) in state.questionListData" :key="index" @click="openDetail(state.tableConfig.questionList, item)">
+								<li v-for="(item,index) in state.questionListData" :key="index" @click="openDetail(state.tableConfig.questionList, item,'“诚”心言事口')">
 									<img class="icon" src="/@/assets/images/community/icon-news.png" />
 									<div class="main">
 										<div class="title ellipsis-2">{{item.wentineirong}}</div>
-										<div class="date">{{item.CreateTime}}</div>
+										<div class="date">{{item.CreateTime.split(" ")[0]}}</div>
 										<p class="replay" v-if="item.huifuneirong?.length > 0">回复：{{item.huifuneirong}}</p>
 										<el-text type="danger" size="small" v-if="item.huifuneirong?.length < 1">[未回复]</el-text>
 									</div>
@@ -489,13 +492,14 @@ const detailDialogRef = ref(null);
 const QRCodeRef = ref(null);
 const $isMobile = isMobile();
 
-
 import rankTop1 from "/@/assets/images/community/rank_top1.png";
 import rankTop2 from "/@/assets/images/community/rank_top2.png";
 import rankTop3 from "/@/assets/images/community/rank_top3.png";
+import chengImg from "/@/assets/images/cheng.png";
 let icons = [rankTop1, rankTop2, rankTop3];
 
 // 默认数据
+
 //诚议统计
 const argumentAmount = {
 	topicsTotal: "-",
@@ -557,6 +561,8 @@ const state = reactive({
 	//诚议币统计
 	inergralTotal: inergralTotal as any,
 	//排行
+	rankingTableId: undefined,
+	rankingTimer: null,
 	rankingTag: "总排行" as String,
 	rankingTop: [] as Array<any>,
 	rankingOther: [] as Array<any>,
@@ -600,6 +606,7 @@ onMounted(() => {
 	//排行
 	getTotalRanking();
 	getMonthRanking();
+	autoChangeRanking();
 	//诚议
 	getArgumentAmount();
 	getArgumentList();
@@ -736,11 +743,22 @@ const getEconomyTotal = async () => {
 	state.economyTotal = data.result ?? {};
 };
 const getEconomyItemData = async () => {
+	let groupSize = 4;
+	if ($isMobile) groupSize = 2;
+	//type:1日常、2入股
 	const { data } = await getAPI(LargeScreenApi).economyItemData({
 		id: state.id,
 	});
-	let tmp = data.result ?? [];
-	state.economyItemData = tmp;
+	let tmp = data.result?.economys ?? [];
+
+	const economyItemData = [];
+	for (let i = 0; i < tmp.length; i += groupSize) {
+		economyItemData.push(tmp.slice(i, i + groupSize));
+	}
+	// tmp = tmp.slice(0, 10);
+	state.economyItemData = economyItemData;
+	state.tableConfig.equities = data.result.equitiesTableColumns;
+	state.tableConfig.daily = data.result.dailyTableColumns;
 };
 //志愿者
 const getVolunteerList = async () => {
@@ -764,12 +782,13 @@ const getTotalRanking = async () => {
 		page: 1,
 		pageSize: 10,
 	});
-	let tmp = data.result ?? [];
+	let tmp = data.result?.rankings ?? [];
 	tmp = tmp.map((item: any, index: number) => {
 		item.icon = icons[index];
 		item.headPortrait = getFirstImg(item.headPortrait);
 		return item;
 	});
+	state.rankingTableId = data.result.tableId;
 	state.totalRankingTop = tmp.slice(0, 3);
 	state.totalRankingOther = tmp.slice(3, 10);
 	state.rankingTop = state.totalRankingTop;
@@ -782,7 +801,7 @@ const getMonthRanking = async () => {
 		page: 1,
 		pageSize: 10,
 	});
-	let tmp = data.result ?? [];
+	let tmp = data.result?.rankings ?? [];
 	tmp = tmp.map((item: any, index: number) => {
 		item.icon = icons[index];
 		item.headPortrait = getFirstImg(item.headPortrait);
@@ -790,6 +809,18 @@ const getMonthRanking = async () => {
 	});
 	state.monthRankingTop = tmp.slice(0, 3);
 	state.monthRankingOther = tmp.slice(3, 10);
+};
+
+const stopChangeRanking = () => {
+	clearInterval(state.rankingTimer);
+};
+//自动切换排行
+const autoChangeRanking = () => {
+	state.rankingTimer = setInterval(() => {
+		let tag = state.rankingTag;
+		tag = tag == "总排行" ? "月排行" : "总排行";
+		clickRankingTag(tag);
+	}, 15000);
 };
 //切换排行
 const clickRankingTag = (tag: String) => {
@@ -801,6 +832,54 @@ const clickRankingTag = (tag: String) => {
 		state.rankingTop = state.monthRankingTop;
 		state.rankingOther = state.monthRankingOther;
 	}
+};
+//经济子项
+const openEconomyDialog = (type: number, title: string, inOrOut?: string) => {
+	//表配置
+	let tableId, columns;
+	if (type == 1) {
+		tableId = state.tableConfig.daily.tableId;
+		columns = state.tableConfig.daily.columns;
+	} else {
+		tableId = state.tableConfig.equities.tableId;
+		columns = state.tableConfig.equities.columns;
+	}
+	let tableConfig = {
+		id: state.id,
+		tableId,
+		columns,
+	};
+	//参数配置
+	let tableParams = {
+		id: state.id,
+		conditions: [
+			{
+				fieldName: "jitijingjileixing",
+				condition: 0,
+				fieldValue: title,
+				isValueField: true,
+			},
+		],
+	};
+	if (inOrOut) {
+		tableParams.conditions.push({
+			fieldName: "leixing",
+			condition: 0,
+			fieldValue: inOrOut,
+			isValueField: true,
+		});
+	}
+
+	tableDialogRef?.value.openDialog(tableConfig, title, tableParams);
+};
+//打开排行人员积分列表
+const openRankingDialog = (userName: string) => {
+	let tableParams = { id: state.id };
+	let tableConfig = {
+		id: state.id,
+		tableId: state.rankingTableId,
+	};
+	tableDialogRef?.value.openDialog(tableConfig, userName, tableParams);
 };
 //列表弹窗
 const openTableDialog = (
@@ -816,8 +895,9 @@ const openTableDialog = (
 	}
 };
 //详情弹窗
-const openDetail = (tableConfig: any, row: any) => {
-	if (tableConfig) detailDialogRef?.value.openDialog(tableConfig, row);
+const openDetail = (tableConfig: any, row: any, pageTitle?: string) => {
+	if (tableConfig)
+		detailDialogRef?.value.openDialog(tableConfig, row, pageTitle);
 };
 //我要发言
 const openQuestionFrom = () => {
@@ -868,7 +948,7 @@ const initScreen = () => {
 	let top = (viewHeight - baseHeight) / 2;
 	let cale = scale;
 	// 指定宽度在区域内不按比例设置
-	if ((viewWidth < 2400) & (viewWidth >= 1920)) {
+	if ((viewWidth < 2000) & (viewWidth >= 1920)) {
 		if (scale != 1) {
 			state.pageStyle = "";
 		}
@@ -880,13 +960,28 @@ const initScreen = () => {
 //二维码
 const initQrcode = async () => {
 	const qrUrl = window.location.href;
-	new QRCode(QRCodeRef.value, {
+	const qrCode = new QRCode(QRCodeRef.value, {
 		text: `${encodeURI(qrUrl)}`,
 		width: 60,
 		height: 60,
 		colorDark: "#000",
 		colorLight: "#ffffff",
 	});
+	const logoImage = chengImg;
+	if (logoImage) {
+		let logo = new Image();
+		logo.setAttribute("corssOrigin", "Anonymous");
+		logo.src = logoImage;
+		logo.onload = () => {
+			let qrImg = qrCode._el.getElementsByTagName("img")[0];
+			let canvas = qrCode._el.getElementsByTagName("canvas")[0];
+			let ctx = canvas.getContext("2d");
+			ctx.drawImage(logo, 20, 20, 20, 20);
+			qrImg.src = canvas.toDataURL();
+			// qrImg.style.display = "none";
+			// canvas.style.display = "block";
+		};
+	}
 };
 // 时钟
 const getPageDate = () => {
@@ -928,14 +1023,6 @@ div {
 }
 // 大屏容器
 .screen-page {
-	--main-default-color: #fff;
-	--main-primary-color: #c7feff;
-	--main-primary-color-2: #88feff;
-	--main-primary-color-3: #27acc6;
-
-	--main-sub-color: #f2b543;
-	--border-color: #123f53;
-
 	width: 100%;
 	height: 100vh;
 	box-sizing: border-box;
@@ -983,7 +1070,14 @@ div {
 	-webkit-background-clip: text;
 	-webkit-text-fill-color: transparent;
 }
+
 .ellipsis {
+	white-space: nowrap; /* 确保文本不会换行 */
+	overflow: hidden; /* 超出容器部分的文本隐藏起来 */
+	text-overflow: ellipsis; /* 使用省略号表示文本被截断 */
+}
+
+.ellipsis-1 {
 	display: -webkit-box;
 	-webkit-line-clamp: 1;
 	-webkit-box-orient: vertical;
@@ -993,6 +1087,13 @@ div {
 .ellipsis-2 {
 	display: -webkit-box;
 	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.ellipsis-5 {
+	display: -webkit-box;
+	-webkit-line-clamp: 5;
 	-webkit-box-orient: vertical;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -1105,9 +1206,22 @@ div {
 		font-size: 28px;
 	}
 	.screen-subtitle {
-		margin-top: 10px;
-		font-size: 14px;
-		color: #42aabc;
+		margin-top: 7px;
+		font-size: 16px;
+		font-weight: bold;
+		color: var(--main-sub-color);
+		word-spacing: 10px;
+		letter-spacing: 3px;
+		background-image: linear-gradient(
+			to bottom,
+			#fff,
+			var(--main-primary-color)
+		);
+		color: transparent;
+		-webkit-background-clip: text;
+		-webkit-text-fill-color: transparent;
+
+		animation: screenSubTitleAnimation 5s infinite;
 	}
 	.date-bar {
 		position: absolute;
@@ -1119,7 +1233,7 @@ div {
 		align-items: center;
 		color: #fff;
 		& > div {
-			border-right: 1px #fff dotted;
+			border-right: 1px #999 dotted;
 			padding-right: 10px;
 		}
 		.date {
@@ -1190,7 +1304,12 @@ div {
 		flex-direction: column;
 	}
 }
+
 //诚列史
+.about-card,
+.money-card {
+	height: 488px;
+}
 .about {
 	:deep(.el-carousel__indicators--horizontal) {
 		bottom: initial;
@@ -1211,7 +1330,7 @@ div {
 	left: 0;
 	right: 0;
 	bottom: 0;
-	background: #0006;
+	background: #000a;
 	padding: 10px 20px;
 	display: flex;
 	justify-content: space-around;
@@ -1224,7 +1343,7 @@ div {
 	.num {
 		display: block;
 		color: var(--main-primary-color);
-		font-size: 24px;
+		font-size: 28px;
 	}
 }
 //言事口
@@ -1289,7 +1408,17 @@ div {
 		font-size: 18px;
 		@include gradientColor;
 	}
+
+	:deep(.el-carousel) {
+		.el-carousel__arrow {
+			background-color: #fff2;
+			&:hover {
+				background-color: #27acc677;
+			}
+		}
+	}
 }
+
 // 集体经济-总统计
 .total-box {
 	display: flex;
@@ -1322,7 +1451,7 @@ div {
 		max-width: 33%;
 		padding: 10px 2%;
 		flex-grow: 1;
-		margin: 10px 10px auto 10px;
+		margin: 0 10px auto 10px;
 		background: url("/@/assets/images/community/box1.png") center bottom
 			no-repeat;
 		background-size: 100% 100%;
@@ -1364,6 +1493,9 @@ div {
 	background: rgba(9, 21, 25, 0.4);
 	.news {
 		position: relative;
+		height: 100%;
+		display: flex;
+		flex-direction: column;
 	}
 	.class-title {
 		position: absolute;
@@ -1382,8 +1514,12 @@ div {
 	}
 	.img {
 		width: 100%;
-		height: 110px;
+		flex-grow: 1;
 		object-fit: cover;
+		margin-bottom: 5px;
+		img {
+			height: 100%;
+		}
 	}
 	.title {
 		line-height: 1.2;
@@ -1452,6 +1588,9 @@ div {
 	}
 }
 // 诚议
+.argument-card {
+	max-height: 305px;
+}
 .argument-list {
 	margin: 10px;
 	li {
@@ -1536,12 +1675,21 @@ div {
 		font-size: 16px;
 		color: #96f7f7;
 	}
+	:deep(.el-carousel) {
+		.el-carousel__arrow {
+			background-color: #fff2;
+			&:hover {
+				background-color: #27acc677;
+			}
+		}
+	}
 	ul {
 		margin-top: 5px;
 		li {
 			display: flex;
 			font-size: 12px;
 			margin-bottom: 1px;
+			overflow: hidden;
 			.label {
 				margin-right: 1px;
 				width: 4em;
@@ -1555,10 +1703,15 @@ div {
 				flex-grow: 1;
 				padding: 5px 10px;
 				background: #133139;
-				white-space: nowrap; /* 确保文本不会换行 */
-				overflow: hidden; /* 超出容器部分的文本隐藏起来 */
-				text-overflow: ellipsis; /* 使用省略号表示文本被截断 */
+
 				width: 200px;
+			}
+			&:last-child {
+				.content {
+					overflow: initial;
+					white-space: normal;
+					text-overflow: initial;
+				}
 			}
 		}
 	}
@@ -1666,6 +1819,21 @@ div {
 	}
 }
 
+@keyframes screenSubTitleAnimation {
+	0% {
+		transform: scale(1);
+	}
+	10% {
+		transform: scale(1.2);
+	}
+	20% {
+		transform: scale(1);
+	}
+	100% {
+		transform: scale(1);
+	}
+}
+
 // 移动端
 @media screen and (max-width: 768px) {
 	html,
@@ -1716,11 +1884,12 @@ div {
 		height: 400px;
 	}
 	.argument-card {
-		height: 350px;
+		max-height: 450px;
+		height: 450px;
 	}
 	.company-box {
 		.item {
-			max-width: 50%;
+			max-width: calc(50% - 20px);
 		}
 	}
 	.public-news-card {
