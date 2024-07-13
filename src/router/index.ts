@@ -2,11 +2,7 @@ import { createRouter, createWebHashHistory, RouteRecordRaw } from "vue-router";
 const routes: Array<RouteRecordRaw> = [
     {
         path: '/',
-        redirect: '/',
-    }, {
-        path: '/home',
-        name: 'home',
-        component: () => import("/@/views/home/index.vue")
+        redirect: '/district',
     }, {
         path: '/community/',
         name: 'community',

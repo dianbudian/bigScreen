@@ -14,7 +14,7 @@
 
 			<!-- 时间 -->
 			<div class="date-bar">
-				<div>
+				<div class="date-main">
 					<div class="time">
 						<span class="num">{{state.pageDate?.hour}}:{{state.pageDate?.minute}}:{{state.pageDate?.second}}</span>
 					</div>
@@ -25,6 +25,7 @@
 					</div>
 				</div>
 				<span class="week">星期{{state.pageDate?.week}}</span>
+				<div class="nav-back-btn" v-if="state.from" @click="jumpDistrict()">区级大屏</div>
 			</div>
 
 			<!-- 天气/二维码 -->
@@ -120,15 +121,15 @@
 						<div class="total-box">
 							<div class="item">
 								<p class="num gradient-color">{{state.economyTotal?.incomeTotal}}</p>总收入
-								<small>(元)</small>
+								<small>(万元)</small>
 							</div>
 							<div class="item">
 								<p class="num gradient-color">{{state.economyTotal?.expensesTotal}}</p>总支出
-								<small>(元)</small>
+								<small>(万元)</small>
 							</div>
 							<div class="item">
 								<p class="num gradient-color">{{state.economyTotal?.balance}}</p>余额
-								<small>(元)</small>
+								<small>(万元)</small>
 							</div>
 						</div>
 						<!--  -->
@@ -417,7 +418,7 @@
 												</el-image>
 												{{item.name}}
 											</span>
-											<span class="num">{{item.total}}</span>
+											<span class="num" @click="openRankingDialog(item.name)">{{item.total}}</span>
 										</div>
 									</div>
 								</vue3-seamless-scroll>
@@ -469,7 +470,7 @@
 <script lang="ts" setup>
 import { onMounted, reactive, ref, getCurrentInstance } from "vue";
 import { UserFilled } from "@element-plus/icons-vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { getAPI } from "/@/utils/request";
 import QRCode from "qrcodejs2-fixes";
 import { LargeScreenApi, WeatherApi } from "/@/api/sysApi";
@@ -484,6 +485,7 @@ import DetailDialog from "../component/detailDialog.vue";
 import QuestionFormDialog from "../component/questionFormDialog.vue";
 
 const route = useRoute();
+const router = useRouter();
 const questionRef = ref(null);
 const reportNewsRef = ref(null);
 const questionFormDialogRef = ref(null);
@@ -522,6 +524,7 @@ const inergralTotal = {
 };
 const state = reactive({
 	id: "" as String | Number, //大屏ID
+	from: "" as String, //来源
 	title: "" as String, //大屏标题
 	logo: "" as any, //大屏LOGO
 	pageStyle: "" as String, //大屏等比例样式
@@ -581,6 +584,7 @@ const state = reactive({
 });
 onMounted(() => {
 	state.id = route.query?.id ?? "";
+	state.from = route.query?.from ?? "";
 	//非移动端按比例显示
 	if (!$isMobile) {
 		initScreen();
@@ -627,7 +631,7 @@ const getIntroduce = async () => {
 	let tmp = data.result ?? {};
 	tmp.picture = transformUploadData(tmp.picture);
 	state.introduce = tmp;
-	state.title = tmp.communityName;
+	state.title = tmp.aliasName;
 
 	lazyImg(".about .img", tmp.picture);
 	//meta-title
@@ -788,6 +792,7 @@ const getTotalRanking = async () => {
 		item.headPortrait = getFirstImg(item.headPortrait);
 		return item;
 	});
+	state.tableConfig.rankingList = data.result.tableColumns;
 	state.rankingTableId = data.result.tableId;
 	state.totalRankingTop = tmp.slice(0, 3);
 	state.totalRankingOther = tmp.slice(3, 10);
@@ -874,12 +879,17 @@ const openEconomyDialog = (type: number, title: string, inOrOut?: string) => {
 };
 //打开排行人员积分列表
 const openRankingDialog = (userName: string) => {
-	let tableParams = { id: state.id };
-	let tableConfig = {
-		id: state.id,
-		tableId: state.rankingTableId,
-	};
-	tableDialogRef?.value.openDialog(tableConfig, userName, tableParams);
+	let tableParams = { 
+		conditions: [
+			{
+				fieldName: "xingming",
+				condition: 0,
+				fieldValue: userName,
+				isValueField: true,
+			},
+		]
+	 };
+	tableDialogRef?.value.openDialog(state.tableConfig.rankingList, userName, tableParams);
 };
 //列表弹窗
 const openTableDialog = (
@@ -999,6 +1009,10 @@ const getPageDate = () => {
 		state.pageDate = { ...date };
 	}, 1000);
 };
+const jumpDistrict = ()=>{
+	router.push('/district');
+}
+
 </script>
 
 <style lang="scss">
@@ -1232,7 +1246,7 @@ div {
 		display: flex;
 		align-items: center;
 		color: #fff;
-		& > div {
+		.date-main{
 			border-right: 1px #999 dotted;
 			padding-right: 10px;
 		}
@@ -1252,6 +1266,18 @@ div {
 		}
 		.week {
 			margin-left: 10px;
+		}
+		.nav-back-btn {
+			margin-left: 30px;
+			width: 80px;
+			height: 50px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			text-align: center;
+			background: url('/@/assets/images/community/street.png') center center no-repeat;
+			background-size: 100% 100%;
+			cursor: pointer;
 		}
 	}
 	.weather {

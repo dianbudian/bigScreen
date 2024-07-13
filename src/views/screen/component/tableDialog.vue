@@ -119,6 +119,9 @@ const openDialog = (
 	title: String,
 	tableParams?: Object | undefined
 ) => {
+	
+	state.tableParams = {};
+	
 	//过滤字段
 	tableInfo.columns = tableInfo?.columns?.filter(
 		(item: any) => item.type !== 1 && item.column !='cunshequmingcheng'

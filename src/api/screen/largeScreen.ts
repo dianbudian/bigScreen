@@ -103,7 +103,7 @@ export class LargeScreenApi extends BaseAPI {
 			data: body,
 		});
 	}
-	
+
 	//无登录获取
 	// public async PagePostByNoLogin(body?: any) {
 	// 	return this.Other({
@@ -112,7 +112,7 @@ export class LargeScreenApi extends BaseAPI {
 	// 		data: body
 	// 	})
 	// }
-	
+
 	//通用分页
 	public async getPage(body?: any) {
 		return this.Other({
@@ -121,7 +121,7 @@ export class LargeScreenApi extends BaseAPI {
 			data: body,
 		});
 	}
-	
+
 	//添加留言
 	public async addQuestions(body?: any) {
 		return this.Other({
@@ -130,6 +130,63 @@ export class LargeScreenApi extends BaseAPI {
 			data: body,
 		});
 	}
-	
+
+	//获取街道列表
+	public async streetList(body?: any) {
+		return this.Other({
+			url: this.apiPath + '/streetList',
+			method: 'GET',
+			params: body,
+		});
+	}
+	//获取社区列表
+	public async communityList(body?: any) {
+		return this.Other({
+			url: this.apiPath + '/communityList',
+			method: 'GET',
+			params: body,
+		});
+	}
+	//三务公开统计
+	public async openInfoTotal(body?: any) {
+		return this.Other({
+			url: this.apiPath + '/openInfoTotal',
+			method: 'GET',
+			params: body,
+		});
+	}
+	//问答统计
+	public async questionsAndAnswersTotal(body?: any) {
+		return this.Other({
+			url: this.apiPath + '/questionsAndAnswersTotal',
+			method: 'GET',
+			params: body,
+		});
+	}
+	//诚报统计
+	public async reportTotal(body?: any) {
+		return this.Other({
+			url: this.apiPath + '/reportTotal',
+			method: 'GET',
+			params: body,
+		});
+	}
+	//区级统计
+	public async districtTotal(body?: any) {
+		return this.Other({
+			url: this.apiPath + '/districtTotal',
+			method: 'GET',
+			params: body,
+		});
+	}
+	//清除缓存
+	public async clearCache(body?: any) {
+		return this.Other({
+			url: this.apiPath + '/clearCache',
+			method: 'DELETE',
+			params: body,
+		});
+	}
+
 
 }

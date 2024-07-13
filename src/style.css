@@ -23,7 +23,10 @@
   --dialog-border-color: #27acc6;
   
 }
-
+@font-face {
+	font-family: "electronicFont";
+	src: url("/@/assets/font/DS-DIGIT.TTF");
+}
 a {
   font-weight: 500;
   color: #27acc6;
