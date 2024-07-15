@@ -1,6 +1,7 @@
 <template>
 	<!-- 区级 -->
 	<div class="screen-page" :style="state.pageStyle">
+		<div class="sreen-bg"></div>
 		<!-- 大标题 -->
 		<header class="header">
 			<div class="flex flex-ai-center flex-jc-center" style="height:60px">
@@ -10,6 +11,28 @@
 				</div>
 			</div>
 			<div class="screen-subtitle">真诚待人 真心为民</div>
+			<!-- 时间 -->
+			<div class="date-bar">
+				<div class="date-main">
+					<div class="time">
+						<span class="num">{{state.pageDate?.hour}}:{{state.pageDate?.minute}}:{{state.pageDate?.second}}</span>
+					</div>
+					<div class="date">
+						<span class="num">{{state.pageDate?.year}}</span> 年
+						<span class="num">{{state.pageDate?.month}}</span> 月
+						<span class="num">{{state.pageDate?.day}}</span> 日
+					</div>
+				</div>
+				<span class="week">星期{{state.pageDate?.week}}</span>
+				<div class="nav-back-btn" v-if="state.from" @click="jumpDistrict()">区级大屏</div>
+			</div>
+
+			<!-- 天气/二维码 -->
+			<div class="weather">
+				<span class="weather-address">空气质量</span>
+				<iframe scrolling="no" src="https://widget.tianqiapi.com?style=tg&skin=pitaya&city=新津&color=fff" style="color: #fff; " frameborder="0" width="100%" height="50" allowtransparency="true"></iframe>
+				<div class="qrcode" ref="QRCodeRef"></div>
+			</div>
 		</header>
 
 		<!-- 已选社区 -->
@@ -25,7 +48,7 @@
 		</div>
 
 		<!-- 街镇 -->
-		<div class="street-board">
+		<div class="street-board" @mouseover="clearAutoPlayStreet()" @mouseout="autoPlayStreet()">
 			<div class="street-center">
 				<img class="moon" src="/@/assets/images/district/moon.png" />
 				<b @click="goDistrictTotal()" :class="state.id===0?'active':''">新津区</b>
@@ -43,9 +66,9 @@
 		</div>
 
 		<!-- 内容 -->
-		<div class="content-box" :style="state.id===0?'left:630px;':''">
+		<div class="content-box" :style="state.id===0?'left:600px;':''">
 			<!-- 数据区 -->
-			<div class="data-card">
+			<div :class="state.dataCardClassName">
 				<div class="card">
 					<div class="card-title">
 						<b>{{state.boardShortTitle}}“诚”列史</b>
@@ -246,14 +269,14 @@
 							<li>
 								<span class="title">分类数量</span>
 								<p>
-									<span class="num">{{state.reportTotal.categoryTotal}}</span>
+									<span class="num">{{state.reportTotal.categoryTotal ?? '--'}}</span>
 									<small>个</small>
 								</p>
 							</li>
 							<li>
 								<span class="title">总数量</span>
 								<p>
-									<span class="num">{{state.reportTotal.total}}</span>
+									<span class="num">{{state.reportTotal.total ?? '--'}}</span>
 									<small>条</small>
 								</p>
 							</li>
@@ -275,7 +298,7 @@
 					<div class="qr-code-box">
 						<div v-if="state.checkedVillage?.active" class="qrcode" ref="QRCodeRef"></div>
 						<template v-else>
-							<div v-if="state.checkedVillage?.active===false" class="empty" style="color: #fff; margin-top:50px;">未开通</div>
+							<div v-if="state.checkedVillage?.active===false" class="empty">未开通</div>
 							<div class="circle" v-else>
 								<img class="moon" src="/@/assets/images/district/moon.png" />
 							</div>
@@ -284,21 +307,24 @@
 
 					<ul class="amount" v-if="!state.checkedVillage?.id">
 						<li v-if="state.districtTotal?.streetCount">
+							<p>街道：</p>
 							<p>
-								<span class="num">{{state.districtTotal.streetCount}}</span>
-								<small>个街道</small>
+								<span class="num">{{state.districtTotal.streetCount ?? '--'}}</span>
+								<span>个</span>
 							</p>
 						</li>
 						<li>
+							<p>社区：</p>
 							<p>
-								<span class="num">{{state.districtTotal.communityCount}}</span>
-								<small>个社区</small>
+								<span class="num">{{state.districtTotal.communityCount ?? '--'}}</span>
+								<span>个</span>
 							</p>
 						</li>
 						<li>
+							<p>已开通社区：</p>
 							<p>
-								<span class="num">{{state.districtTotal.openCount}}</span>
-								<small>个已开通社区</small>
+								<span class="num">{{state.districtTotal.openCount ?? '--'}}</span>
+								<span>个</span>
 							</p>
 						</li>
 					</ul>
@@ -319,7 +345,8 @@
 
 		<!-- 底部 -->
 		<footer class="footer">
-			<!-- <img class="move-img" src="/@/assets/images/district/plate2.png" /> -->
+			<img class="move-img" src="/@/assets/images/district/bottom_rotate.png" />
+			<img class="bg" src="/@/assets/images/district/bottom.png" />
 		</footer>
 	</div>
 </template>
@@ -351,7 +378,18 @@ const state = reactive({
 	pageStyle: "",
 	boardTitle: "",
 	boardShortTitle: "",
+	//时钟
+	pageDate: {
+		year: "0000",
+		month: "00",
+		day: "00",
+		hour: "00",
+		minute: "00",
+		second: "00",
+		week: "",
+	},
 	//街镇
+	streetAutoPlayIndex: 0 as number,
 	streetIndexList: [] as any, //索引数组
 	streetList: [] as any,
 	streetCheckedIndex: 0,
@@ -370,22 +408,40 @@ const state = reactive({
 	questionTotal: {} as any,
 	argumentAmount: {} as any,
 	reportTotal: {} as any,
+	//数据面板样式名
+	dataCardClassName: "data-card",
 });
-
+let autoPlayStreetTimer = null;
 onMounted(() => {
+	document.title = "新津区基层治理“诚”列馆";
 	initScreen();
 	window.addEventListener("resize", () => {
 		initScreen();
 	});
-
+	getPageDate();
 	//加载
 	getStreeList();
-
 	//初始加载区级数据
 	if (state.id === 0) {
 		loadDistrictTotal();
 	}
 });
+// 时钟
+const getPageDate = () => {
+	setInterval(() => {
+		let now = new Date();
+		let date = {
+			year: now.getFullYear(),
+			month: ("0" + (now.getMonth() + 1)).substr(-2),
+			day: ("0" + now.getDate()).substr(-2),
+			hour: ("0" + now.getHours()).substr(-2),
+			minute: ("0" + now.getMinutes()).substr(-2),
+			second: ("0" + now.getSeconds()).substr(-2),
+			week: "日一二三四五六".split("")[now.getDay()],
+		};
+		state.pageDate = { ...date };
+	}, 1000);
+};
 //当前地区展示标题
 state.boardTitle = computed(() => {
 	if (state.checkedVillage?.title) {
@@ -395,6 +451,16 @@ state.boardTitle = computed(() => {
 		return state.checkedStreet.title;
 	}
 	return "新津区";
+});
+state.dataCardClassName = computed(() => {
+	if (state.checkedVillage?.active) {
+		return "data-card";
+	} else {
+		if (state.checkedVillage?.active === false) {
+			return "data-card disable";
+		}
+	}
+	return "data-card";
 });
 //加载街道
 const getStreeList = async () => {
@@ -417,8 +483,12 @@ const getStreeList = async () => {
 		state.streetIndexList.push(i);
 	}
 	state.streetCheckedIndex = Math.ceil(state.streetList.length / 2) - 1;
+	state.streetAutoPlayIndex = state.streetCheckedIndex;
 	setTimeout(() => {
 		goStreetRotate(state.streetCheckedIndex);
+		nextTick(() => {
+			autoPlayStreet();
+		});
 	}, 500);
 };
 const getStreetPlaceIndex = (_index: number) => {
@@ -428,15 +498,30 @@ const getStreetPlaceIndex = (_index: number) => {
 		}
 	}
 };
+
+//自动旋转街道
+const autoPlayStreet = () => {
+	autoPlayStreetTimer = setInterval(() => {
+		state.streetAutoPlayIndex++;
+		if (state.streetAutoPlayIndex >= state.streetList.length) {
+			state.streetAutoPlayIndex = 0;
+		}
+		goStreetRotate(state.streetAutoPlayIndex, true);
+	}, 7000);
+};
+const clearAutoPlayStreet = () => {
+	clearInterval(autoPlayStreetTimer);
+};
 //街道布局
 const goStreetRotate = (baseIndex: number, check?: boolean) => {
+	state.streetAutoPlayIndex = baseIndex;
 	let index = getStreetPlaceIndex(baseIndex);
 	let step = index - state.streetCheckedIndex;
 
 	//点击街道,加载街道
 	if (check) {
 		//获取选中街道值
-		state.id = state.streetList[baseIndex].id;
+		state.id = state.streetList[baseIndex]?.id;
 		loadStreetTotal();
 		state.checkedStreet = state.streetList[baseIndex];
 		state.streetList[baseIndex].checked = true;
@@ -538,10 +623,10 @@ const goVillageRotate = (index: number, check?: boolean) => {
 			});
 			//加载统计数据
 			loadVillageTotal();
-			state.villageList[index].checked = true;
 		} else {
 			clearAmountData();
 		}
+		state.villageList[index].checked = true;
 	}
 	//样式
 	state.villageList[index].rotate = 0;
@@ -701,11 +786,12 @@ const clearCache = async () => {
 };
 
 //二维码
-import chengImg from "/@/assets/images/cheng2.png";
+import chengImg from "/@/assets/images/cheng.png";
+import cheng2Img from "/@/assets/images/cheng2.png";
 import ballImg from "/@/assets/images/district/moon.png";
 
 const initQrcode = async (village?: any) => {
-	let colorDark = "#148084";
+	let colorDark = "#000000";
 	let colorLight = "#ffffff";
 	let qrUrl = encodeURI(
 		window.location.origin + "/#/community?id=" + village?.id
@@ -727,7 +813,7 @@ const initQrcode = async (village?: any) => {
 			let qrImg = qrCode._el.getElementsByTagName("img")[0];
 			let canvas = qrCode._el.getElementsByTagName("canvas")[0];
 			let ctx = canvas.getContext("2d");
-			ctx.drawImage(logo, 25, 25, 30, 30);
+			ctx.drawImage(logo, 30, 30, 20, 20);
 			qrImg.src = canvas.toDataURL();
 			// qrImg.style.display = "none";
 			// canvas.style.display = "block";
@@ -844,6 +930,11 @@ const initScreen = () => {
 * {
 	box-sizing: border-box;
 }
+body {
+	background: url("/@/assets/images/district/bg.jpg");
+	background-size: 100% 100%;
+	background-color: #10141a;
+}
 body,
 #app {
 	height: 100%;
@@ -885,7 +976,11 @@ body,
 	background-color: #10141a;
 	display: flex;
 	flex-direction: column;
-	overflow: hidden;
+
+	-webkit-mask-image: url("/@/assets/images/district/cloud.jpg");
+	-webkit-mask-size: 100% 100%;
+	-webkit-mask-composite: add;
+	-webkit-mask-mode: match-source;
 }
 // 渐变色
 .gradient-color {
@@ -925,10 +1020,20 @@ body,
 	color: #000;
 	text-shadow: 0 5px 5px #000;
 }
-
+.sreen-bg {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	background: url("/@/assets/images/district/cloud.png") center bottom
+		no-repeat;
+	background-size: auto 100%;
+	animation: animationScreenBgRotate ease-in-out 50s infinite;
+}
 .header {
 	position: fixed;
-	z-index: 99;
+	z-index: 101;
 	left: 0;
 	top: 0;
 	width: 100%;
@@ -936,6 +1041,56 @@ body,
 	background: url("/@/assets/images/district/top.png") center bottom no-repeat;
 	background-size: auto 100%;
 	text-align: center;
+	.date-bar {
+		position: absolute;
+		top: 20px;
+		left: 30px;
+		color: #fff;
+		text-align: left;
+		display: flex;
+		align-items: center;
+		color: #fff;
+		.date-main {
+			border-right: 1px #777 dotted;
+			padding-right: 10px;
+		}
+		.date {
+			font-size: 18px;
+			.num {
+				line-height: 1;
+				font-size: 20px;
+				color: #fff;
+			}
+		}
+		.time {
+			text-align: center;
+			.num {
+				line-height: 1;
+				color: #dba139;
+			}
+		}
+		.week {
+			margin-left: 10px;
+		}
+	}
+	.weather {
+		position: absolute;
+		top: 20px;
+		right: 0px;
+		display: flex;
+		align-items: center;
+		.weather-address {
+			position: absolute;
+			top: 0px;
+			left: 0;
+			width: 110px;
+			text-align: center;
+			background: #19160e;
+			border-radius: 10px;
+			color: #fff;
+			font-size: 12px;
+		}
+	}
 
 	.screen-subtitle {
 		margin-top: 15px;
@@ -956,17 +1111,7 @@ body,
 		animation: screenSubTitleAnimation 5s infinite;
 	}
 }
-.footer {
-	position: fixed;
-	z-index: 0;
-	left: 0;
-	bottom: 0;
-	width: 100%;
-	height: 76px;
-	background: url("/@/assets/images/district/bottom.png") center bottom
-		no-repeat;
-	background-size: auto 100%;
-}
+
 .screen-title {
 	font-size: 28px;
 	margin-top: 10px;
@@ -983,16 +1128,18 @@ body,
 		text-align: right;
 		.moon {
 			position: absolute;
-			left: -50px;
-			top: -40px;
-			z-index: 8;
-			animation: moonRotate 5s infinite;
+			width: 260px;
+			height: 260px;
+			left: -35px;
+			top: -105px;
+			z-index: 98;
+			animation: moonRotate ease-out 5s infinite;
 		}
 		b {
 			position: relative;
 			cursor: pointer;
 			margin-right: 20px;
-			z-index: 9;
+			z-index: 99;
 			font-size: 32px;
 			@include gradient-color();
 			&.active {
@@ -1008,6 +1155,7 @@ body,
 		height: 274px;
 		position: absolute;
 		top: -137px;
+		z-index: 99;
 		background: url("/@/assets/images/district/street.png") left center
 			no-repeat;
 		cursor: pointer;
@@ -1038,7 +1186,7 @@ body,
 			left: 100%;
 		}
 		&.checked {
-			z-index: 99;
+			z-index: 100;
 			background: url("/@/assets/images/district/street_active.png") 3px
 				center no-repeat;
 			b {
@@ -1106,7 +1254,6 @@ body,
 			position: absolute;
 			display: none;
 			left: 160px;
-			// margin-left: 20px;
 		}
 		&.active {
 			background: url("/@/assets/images/district/community.png") left
@@ -1126,7 +1273,6 @@ body,
 			}
 		}
 		&.disable {
-			cursor: not-allowed;
 			background: url("/@/assets/images/district/community_disable.png")
 				left center no-repeat;
 		}
@@ -1139,9 +1285,9 @@ body,
 .content-box {
 	position: absolute;
 	margin: auto;
-	top: 110px;
+	top: 130px;
 	bottom: 77px;
-	left: 800px;
+	left: 780px;
 	right: 70px;
 	display: flex;
 	transition: 0.3s;
@@ -1158,7 +1304,10 @@ body,
 	flex-direction: column;
 	justify-content: space-around;
 }
-
+.data-card.disable {
+	border: 1px #666 solid;
+	box-shadow: 0 0 70px #666 inset;
+}
 .card {
 	color: #bdf1ff;
 	font-size: 12px;
@@ -1265,33 +1414,44 @@ body,
 }
 
 .function-card {
-	padding: 30px 50px 50px 50px;
+	padding: 30px 50px 30px 50px;
+
 	min-height: 200px;
 	background-color: rgba(9, 21, 25, 0.6);
 	box-shadow: 0 0 70px #50d9f4 inset;
 	display: flex;
 	flex-direction: column;
 	justify-content: space-between;
+	align-items: center;
 	.function-card-title {
 		@include gradient-active-color;
 		font-size: 32px;
 		text-align: center;
 	}
 	.amount {
+		min-width: 200px;
 		margin-top: 20px;
 		color: #fff;
 		li {
 			text-align: center;
 			display: flex;
 			align-items: center;
+			p {
+				width: 50%;
+			}
+			p:first-child {
+				text-align: right;
+			}
+			p:last-child {
+				text-align: left;
+				display: flex;
+				align-items: center;
+			}
 			.title {
 				color: #fff;
 			}
 			.num {
-				color: #fff;
-			}
-			small {
-				margin-left: 2px;
+				@include gradient-active-color();
 			}
 		}
 	}
@@ -1300,6 +1460,7 @@ body,
 		margin-top: 50px;
 		width: 181px;
 		min-height: 157px;
+		padding-top: 20px;
 		background: url("/@/assets/images/district/dish.png") center bottom
 			no-repeat;
 		background-size: 100% auto;
@@ -1313,7 +1474,12 @@ body,
 			width: 70px;
 			height: 70px;
 			z-index: 8;
-			animation: moonRotate 5s infinite;
+			animation: moonRotate ease-in-out 5s infinite;
+		}
+		.empty {
+			margin-top: 35px;
+			font-size: 24px;
+			color: #999999;
 		}
 	}
 	.btn {
@@ -1340,16 +1506,31 @@ body,
 }
 
 .footer {
-
-	// .move-img {
-	// 	position: absolute;
-	// 	left: 0;
-	// 	top: 0;
-	// 	z-index: 2;
-	// 	-webkit-mask-image: url("/@/assets/images/district/bb.png");
-	// 	-webkit-mask-size: 50% 50%;
-	// 	-webkit-mask-composite: intersect;
-	// }
+	position: fixed;
+	z-index: 0;
+	left: 0;
+	bottom: 0;
+	width: 100%;
+	text-align: center;
+	// background: url("/@/assets/images/district/bottom.png") center bottom
+	// 	no-repeat;
+	// background-size: auto 100%;
+	.bg {
+		width: 713px;
+		height: 31px;
+		margin: 0 auto;
+		position: relative;
+		z-index: 99;
+		display: block;
+	}
+	.move-img {
+		position: absolute;
+		left: 50%;
+		margin-left: -60px;
+		top: -30px;
+		z-index: 98;
+		animation: moonRotate linear 10s infinite;
+	}
 }
 
 // 移动端
@@ -1424,6 +1605,21 @@ body,
 	}
 	100% {
 		transform: rotate(360deg);
+	}
+}
+//背景旋转动画
+@keyframes animationScreenBgRotate {
+	0% {
+		transform: rotate(0) scale(1);
+		opacity: 0.9;
+	}
+	50% {
+		transform: rotate(30deg) scale(1.5);
+		opacity: 0.2;
+	}
+	100% {
+		transform: rotate(0deg) scale(1);
+		opacity: 0.9;
 	}
 }
 </style>

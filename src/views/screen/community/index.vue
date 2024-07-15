@@ -1316,6 +1316,7 @@ div {
 		flex-direction: column;
 	}
 	.col-main {
+		width: 865px;
 		margin: 0 10px;
 		height: 100%;
 		flex-grow: 1;
