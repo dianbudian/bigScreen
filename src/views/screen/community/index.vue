@@ -4,7 +4,7 @@
 		<!-- 大标题 -->
 		<header class="header">
 			<div class="flex flex-ai-center flex-jc-center" style="height:60px">
-				<img v-if="state.logo" :src="state.logo" class="logo" width="40" height="40" />
+				<img v-if="state.introduce.logo" :src="state.introduce.logo" class="logo" width="40" height="40" />
 				<div class="position-relative">
 					<b class="gradient-color screen-title position-relative z-index-up">新津区基层治理{{state.title}}“诚”列馆</b>
 					<b class="screen-title title-shadow">新津区基层治理{{state.title}}“诚”列馆</b>
@@ -630,6 +630,15 @@ const getIntroduce = async () => {
 	});
 	let tmp = data.result ?? {};
 	tmp.picture = transformUploadData(tmp.picture);
+	if(tmp.picture.length>1){
+		tmp.picture = tmp.picture.slice(0,5);
+	}
+	tmp.logo = transformUploadData(tmp.logo);
+	if(tmp.logo.length){
+		tmp.logo = tmp.logo[0];
+	}else{
+		tmp.logo = undefined;
+	}
 	state.introduce = tmp;
 	state.title = tmp.aliasName;
 
@@ -821,6 +830,9 @@ const stopChangeRanking = () => {
 };
 //自动切换排行
 const autoChangeRanking = () => {
+	if(state.monthRankingOther.length < 1){
+		return;
+	}
 	state.rankingTimer = setInterval(() => {
 		let tag = state.rankingTag;
 		tag = tag == "总排行" ? "月排行" : "总排行";
@@ -1270,13 +1282,14 @@ div {
 		.nav-back-btn {
 			margin-left: 30px;
 			width: 80px;
-			height: 50px;
+			height: 30px;
 			display: flex;
 			align-items: center;
 			justify-content: center;
 			text-align: center;
 			background: url('/@/assets/images/community/street.png') center center no-repeat;
 			background-size: 100% 100%;
+			opacity: .6;
 			cursor: pointer;
 		}
 	}
@@ -1860,6 +1873,18 @@ div {
 		transform: scale(1);
 	}
 }
+
+// 大屏端
+// @media screen and (min-width:1919px) and (max-width: 2260px) {
+// 	.total-box {
+// 		margin-top: 20px;
+// 		margin-bottom: 20px;
+// 	}
+// 	.public-news-card {
+// 		margin-top: 20px;
+// 	}
+// }
+
 
 // 移动端
 @media screen and (max-width: 768px) {

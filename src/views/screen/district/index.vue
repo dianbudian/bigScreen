@@ -26,29 +26,19 @@
 				<span class="week">星期{{state.pageDate?.week}}</span>
 				<div class="nav-back-btn" v-if="state.from" @click="jumpDistrict()">区级大屏</div>
 			</div>
-
 			<!-- 天气/二维码 -->
+
 			<div class="weather">
+				<div class="state-bar">
+					<el-checkbox v-model="state.isAutoPlay" label="自动轮巡" />
+				</div>
 				<span class="weather-address">空气质量</span>
 				<iframe scrolling="no" src="https://widget.tianqiapi.com?style=tg&skin=pitaya&city=新津&color=fff" style="color: #fff; " frameborder="0" width="100%" height="50" allowtransparency="true"></iframe>
-				<div class="qrcode" ref="QRCodeRef"></div>
 			</div>
 		</header>
 
-		<!-- 已选社区 -->
-		<div class="community-card">
-			<div class="circle"></div>
-			<!-- <div class="marktip"><img class="arr" src="/@/assets/images/district/marktip.png" /></div> -->
-			<ul class="village">
-				<li v-for="(item,index) in state.villageList" :key="index" :class="getClassName(item.checked,item.active)" :style="'transform: rotate('+ item.rotate +');'" @click="goVillageRotate(index,true)">
-					<b>{{item.title}}</b>
-					<img class="arr animate-flash" src="/@/assets/images/district/street_arrow.png" />
-				</li>
-			</ul>
-		</div>
-
 		<!-- 街镇 -->
-		<div class="street-board" @mouseover="clearAutoPlayStreet()" @mouseout="autoPlayStreet()">
+		<div class="street-board" @mouseover="changeAutoPlay(false)" @mouseout="leaveAutoPlay()">
 			<div class="street-center">
 				<img class="moon" src="/@/assets/images/district/moon.png" />
 				<b @click="goDistrictTotal()" :class="state.id===0?'active':''">新津区</b>
@@ -58,11 +48,22 @@
 				:key="index"
 				:class="item.checked ? 'item checked': 'item'"
 				:style="'transform: rotate('+ item.rotate +');opacity:'+item.opacity"
-				@click="goStreetRotate(index, true)"
+				@click="clickStreet(index, true)"
 			>
 				<b>{{item.title}}</b>
 				<img class="arr animate-flash" src="/@/assets/images/district/street_arrow.png" />
 			</div>
+		</div>
+		<!-- 已选社区 -->
+		<div class="community-card">
+			<div class="circle"></div>
+			<!-- <div class="marktip"><img class="arr" src="/@/assets/images/district/marktip.png" /></div> -->
+			<ul class="village" @mouseover="changeAutoPlay(false)" @mouseout="leaveAutoPlay()">
+				<li v-for="(item,index) in state.villageList" :key="index" :class="getClassName(item.checked,item.active)" :style="'transform: rotate('+ item.rotate +');'" @click="clickVillage(index,true)">
+					<b>{{item.title}}</b>
+					<img class="arr animate-flash" src="/@/assets/images/district/street_arrow.png" />
+				</li>
+			</ul>
 		</div>
 
 		<!-- 内容 -->
@@ -328,6 +329,7 @@
 							</p>
 						</li>
 					</ul>
+					<div class="about-text" v-else>{{state.introduce?.situation?.substr(0,100)}}...</div>
 				</div>
 
 				<div>
@@ -347,6 +349,7 @@
 		<footer class="footer">
 			<img class="move-img" src="/@/assets/images/district/bottom_rotate.png" />
 			<img class="bg" src="/@/assets/images/district/bottom.png" />
+			<div class="tec">技术支持：成都汇编科技有限公司 联系电话：15198109701</div>
 		</footer>
 	</div>
 </template>
@@ -361,6 +364,7 @@ import {
 	getCurrentInstance,
 	nextTick,
 	computed,
+	watch,
 } from "vue";
 import { ElMessageBox, ElMessage } from "element-plus";
 import { UserFilled } from "@element-plus/icons-vue";
@@ -389,6 +393,9 @@ const state = reactive({
 		week: "",
 	},
 	//街镇
+	lastActionTime: null as any,
+	isBaseAutoPlay: true, //是否自动轮询(操作)
+	isAutoPlay: true, //是否自动轮询(显示)
 	streetAutoPlayIndex: 0 as number,
 	streetIndexList: [] as any, //索引数组
 	streetList: [] as any,
@@ -414,9 +421,17 @@ const state = reactive({
 let autoPlayStreetTimer = null;
 onMounted(() => {
 	document.title = "新津区基层治理“诚”列馆";
-	initScreen();
-	window.addEventListener("resize", () => {
+
+	//屏幕尺寸小于1920采用比例
+	if (window.innerWidth < 1920) {
 		initScreen();
+	}
+	window.addEventListener("resize", () => {
+		if (window.innerWidth < 1920) {
+			initScreen();
+		} else {
+			state.pageStyle = "";
+		}
 	});
 	getPageDate();
 	//加载
@@ -425,6 +440,7 @@ onMounted(() => {
 	if (state.id === 0) {
 		loadDistrictTotal();
 	}
+	watchAction();
 });
 // 时钟
 const getPageDate = () => {
@@ -462,6 +478,69 @@ state.dataCardClassName = computed(() => {
 	}
 	return "data-card";
 });
+//自动播放控制状态
+watch(
+	() => state.isBaseAutoPlay,
+	(_newValue) => {
+		if (_newValue === true) {
+			clearAutoPlayStreet();
+			autoPlayStreet();
+		}
+		if (_newValue === false) {
+			clearAutoPlayStreet();
+		}
+	}
+);
+//自动播放显示状态
+watch(
+	() => state.isAutoPlay,
+	(_newValue) => {
+		state.isBaseAutoPlay = _newValue ? true : false;
+	}
+);
+//改变播放状态
+const changeAutoPlay = () => {
+	state.isBaseAutoPlay = false;
+};
+//鼠标离开回复播放状态
+const leaveAutoPlay = () => {
+	state.isBaseAutoPlay = state.isAutoPlay ? true : false;
+};
+
+function minutesBetweenDates(date1, date2) {
+	const oneMinute = 60 * 1000; // 1分钟的毫秒数
+	const diff = Math.abs(date2.getTime() - date1.getTime()); // 计算时间差
+	return diff / oneMinute; // 返回分钟数
+}
+const watchAction = () => {
+	setInterval(() => {
+		let now = new Date();
+		const minutesDifference = minutesBetweenDates(
+			now,
+			state.lastActionTime
+		);
+		if (minutesDifference >= 2) {
+			state.isAutoPlay = true;
+		}
+	}, 60000);
+};
+// function minutesBetweenDates(date1, date2) {
+// 	const oneSeconde = 1 * 1000; // 1秒的毫秒数
+// 	const diff = Math.abs(date2.getTime() - date1.getTime()); // 计算时间差
+// 	return diff / oneSeconde; // 返回秒数
+// }
+// const watchAction = () => {
+// 	setInterval(() => {
+// 		let now = new Date();
+// 		const minutesDifference = minutesBetweenDates(
+// 			now,
+// 			state.lastActionTime
+// 		);
+// 		if (minutesDifference >= 20) {
+// 			state.isAutoPlay = true;
+// 		}
+// 	}, 1000);
+// };
 //加载街道
 const getStreeList = async () => {
 	let query = {};
@@ -484,6 +563,8 @@ const getStreeList = async () => {
 	}
 	state.streetCheckedIndex = Math.ceil(state.streetList.length / 2) - 1;
 	state.streetAutoPlayIndex = state.streetCheckedIndex;
+	//最终操作时间
+	state.lastActionTime = new Date();
 	setTimeout(() => {
 		goStreetRotate(state.streetCheckedIndex);
 		nextTick(() => {
@@ -512,6 +593,18 @@ const autoPlayStreet = () => {
 const clearAutoPlayStreet = () => {
 	clearInterval(autoPlayStreetTimer);
 };
+
+const clickStreet = (baseIndex: number, check?: boolean) => {
+	state.isAutoPlay = false;
+	state.lastActionTime = new Date();
+	goStreetRotate(baseIndex, check);
+};
+const clickVillage = (baseIndex: number, check?: boolean) => {
+	state.isAutoPlay = false;
+	state.lastActionTime = new Date();
+	goVillageRotate(baseIndex, check);
+};
+
 //街道布局
 const goStreetRotate = (baseIndex: number, check?: boolean) => {
 	state.streetAutoPlayIndex = baseIndex;
@@ -522,8 +615,8 @@ const goStreetRotate = (baseIndex: number, check?: boolean) => {
 	if (check) {
 		//获取选中街道值
 		state.id = state.streetList[baseIndex]?.id;
-		loadStreetTotal();
 		state.checkedStreet = state.streetList[baseIndex];
+		loadStreetTotal();
 		state.streetList[baseIndex].checked = true;
 		state.streetList[baseIndex].rotate = "0";
 		state.streetList[baseIndex].opacity = 1;
@@ -667,8 +760,10 @@ const loadDistrictTotal = () => {
 //加载街道统计数据
 const loadStreetTotal = () => {
 	clearAmountData();
-	state.streetList = state.streetList.map((item: any) => {
-		item.checked = false;
+	state.streetList = state.streetList.map((item: any, _index: number) => {
+		if (state.streetCheckedIndex !== _index) {
+			item.checked = false;
+		}
 		return item;
 	});
 	state.checkedVillage = {};
@@ -697,10 +792,15 @@ const loadVillageTotal = () => {
 
 //区级、街镇诚列史、街镇数量统计
 const getDistrictTotal = async () => {
+	let checkedStreet = state.streetList.find((item: any) => {
+		return item.id == state.id;
+	});
+
 	let query = {
 		id: state.id,
-		name: state.checkedStreet?.title,
+		name: checkedStreet?.title,
 	};
+	console.log(checkedStreet, query);
 	const { data } = await getAPI(LargeScreenApi).districtTotal(query);
 	let tmp = data.result ?? {};
 	state.districtTotal = tmp;
@@ -832,16 +932,16 @@ const getClassName = (checked: boolean, active: boolean) => {
 	}
 	return className;
 };
-const changeStreetList = (index: number) => {
-	//点击的下方
-	if (index > state.streetCheckedIndex) {
-		let del = state.streetList.shift();
-		state.streetList.push(del);
-	} else {
-		let del = state.streetList.pop();
-		state.streetList.unshift(del);
-	}
-};
+// const changeStreetList = (index: number) => {
+// 	//点击的下方
+// 	if (index > state.streetCheckedIndex) {
+// 		let del = state.streetList.shift();
+// 		state.streetList.push(del);
+// 	} else {
+// 		let del = state.streetList.pop();
+// 		state.streetList.unshift(del);
+// 	}
+// };
 
 //清空数据
 const clearAmountData = () => {
@@ -1079,6 +1179,24 @@ body,
 		right: 0px;
 		display: flex;
 		align-items: center;
+		.state-bar {
+			position: absolute;
+			right: 100%;
+			:deep(.el-checkbox) {
+				.el-checkbox__label {
+					padding-left: 3px;
+				}
+				&.is-checked {
+					.el-checkbox__label {
+						color: #fff;
+					}
+					.el-checkbox__inner {
+						background: #1b7497;
+						border-color: #1b7497;
+					}
+				}
+			}
+		}
 		.weather-address {
 			position: absolute;
 			top: 0px;
@@ -1118,12 +1236,13 @@ body,
 }
 .street-board {
 	position: absolute;
-	left: 165px;
+	// left: 165px;
+	left: 210px;
 	top: 50%;
 	.street-center {
 		position: absolute;
 		width: 165px;
-		right: 100%;
+		right: 70px;
 		top: -22px;
 		text-align: right;
 		.moon {
@@ -1133,7 +1252,7 @@ body,
 			left: -35px;
 			top: -105px;
 			z-index: 98;
-			animation: moonRotate ease-out 5s infinite;
+			animation: moonRotate linear 5s infinite;
 		}
 		b {
 			position: relative;
@@ -1183,7 +1302,7 @@ body,
 		.arr {
 			position: absolute;
 			display: none;
-			left: 100%;
+			left: calc(100% - 10px);
 		}
 		&.checked {
 			z-index: 100;
@@ -1204,7 +1323,7 @@ body,
 }
 .community-card {
 	position: absolute;
-	left: 570px;
+	left: 580px;
 	top: 0;
 	bottom: 0;
 	.circle {
@@ -1428,6 +1547,13 @@ body,
 		font-size: 32px;
 		text-align: center;
 	}
+	.about-text {
+		margin-top: 20px;
+		width: 180px;
+		font-size: 12px;
+		text-align: justify;
+		color: var(--main-primary-color);
+	}
 	.amount {
 		min-width: 200px;
 		margin-top: 20px;
@@ -1515,6 +1641,14 @@ body,
 	// background: url("/@/assets/images/district/bottom.png") center bottom
 	// 	no-repeat;
 	// background-size: auto 100%;
+	.tec {
+		position: absolute;
+		width: 100%;
+		bottom: 2px;
+		z-index: 100;
+		color: #ccc;
+		font-size: 12px;
+	}
 	.bg {
 		width: 713px;
 		height: 31px;

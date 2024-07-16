@@ -13,7 +13,7 @@
 				<el-form-item label="联系电话" label-width="120">
 					<el-input v-model="state.formData.phone" placeholder="请输入联系电话" />
 				</el-form-item>
-				<el-form-item label="质疑内容" prop="content" label-width="120" :rules="[
+				<el-form-item label="内容" prop="content" label-width="120" :rules="[
 							{ required: true, message: '内容必填', trigger: 'blur', }
 						]">
 					<el-input type="textarea" v-model="state.formData.content" :rows="5" placeholder="请输入内容" />
