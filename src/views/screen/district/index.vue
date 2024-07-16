@@ -30,7 +30,8 @@
 
 			<div class="weather">
 				<div class="state-bar">
-					<el-checkbox v-model="state.isAutoPlay" label="自动轮巡" />
+					<!-- <el-checkbox v-model="state.isAutoPlay" label="自动轮巡" /> -->
+                    <el-switch v-model="state.isAutoPlay" size="large" width="60" inline-prompt active-text="自动" inactive-text="手动" style="--el-switch-on-color: #347e91;--el-switch-off-color: #275e6c90 " />
 				</div>
 				<span class="weather-address">空气质量</span>
 				<iframe scrolling="no" src="https://widget.tianqiapi.com?style=tg&skin=pitaya&city=新津&color=fff" style="color: #fff; " frameborder="0" width="100%" height="50" allowtransparency="true"></iframe>
@@ -349,7 +350,7 @@
 		<footer class="footer">
 			<img class="move-img" src="/@/assets/images/district/bottom_rotate.png" />
 			<img class="bg" src="/@/assets/images/district/bottom.png" />
-			<div class="tec">技术支持：成都汇编科技有限公司 联系电话：15198109701</div>
+			<div class="tec"><span style="margin-right: 10px;">数据来源：智慧蓉城“报表通”·新津区</span> <span style="margin-left: 10px;">技术支持：汇编科技</span></div>
 		</footer>
 	</div>
 </template>
@@ -1231,8 +1232,9 @@ body,
 }
 
 .screen-title {
-	font-size: 28px;
-	margin-top: 10px;
+    font-size: 32px;
+    letter-spacing: 5px;
+    margin-top: 5px;
 }
 .street-board {
 	position: absolute;

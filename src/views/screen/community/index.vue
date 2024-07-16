@@ -1230,6 +1230,7 @@ div {
 	}
 	.screen-title {
 		font-size: 28px;
+		letter-spacing: 5px; 
 	}
 	.screen-subtitle {
 		margin-top: 7px;
@@ -1913,7 +1914,7 @@ div {
 				height: 20px;
 			}
 			.screen-title {
-				font-size: 20px;
+				font-size: 20px; 
 			}
 		}
 		.main-container {
