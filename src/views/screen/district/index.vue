@@ -424,11 +424,11 @@ onMounted(() => {
 	document.title = "新津区基层治理“诚”列馆";
 
 	//屏幕尺寸小于1920采用比例
-	if (window.innerWidth < 1920) {
+	if (window.innerWidth < 1920 || window.innerWidth >=2560) {
 		initScreen();
 	}
 	window.addEventListener("resize", () => {
-		if (window.innerWidth < 1920) {
+		if (window.innerWidth < 1920 || window.innerWidth >=2560) {
 			initScreen();
 		} else {
 			state.pageStyle = "";
@@ -1072,9 +1072,9 @@ body,
 	width: 100%;
 	height: 100vh;
 	box-sizing: border-box;
-	background: url("/@/assets/images/district/bg.jpg");
-	background-size: 100% 100%;
-	background-color: #10141a;
+	// background: url("/@/assets/images/district/bg.jpg");
+	// background-size: 100% 100%;
+	// background-color: #10141a;
 	display: flex;
 	flex-direction: column;
 
@@ -1535,6 +1535,9 @@ body,
 }
 
 .function-card {
+	width: 300px;
+	min-width: 300px;
+	max-width: 300px;
 	padding: 30px 50px 30px 50px;
 
 	min-height: 200px;
@@ -1585,7 +1588,7 @@ body,
 	}
 	.qr-code-box {
 		text-align: center;
-		margin-top: 50px;
+		margin: 50px auto auto auto;
 		width: 181px;
 		min-height: 157px;
 		padding-top: 20px;

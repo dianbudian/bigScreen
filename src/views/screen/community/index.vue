@@ -25,7 +25,10 @@
 					</div>
 				</div>
 				<span class="week">星期{{state.pageDate?.week}}</span>
-				<div class="nav-back-btn" v-if="state.from" @click="jumpDistrict()">区级大屏</div>
+				<div class="nav-back-btn">
+					<div class="btn" v-if="state.from" @click="jumpDistrict()">区级大屏</div>
+					<div class="btn" @click="clearCache()" >刷新</div>
+				</div>
 			</div>
 
 			<!-- 天气/二维码 -->
@@ -133,7 +136,7 @@
 							</div>
 						</div>
 						<!--  -->
-						<el-carousel height="140px" :interval="5000" :autoplay="true" arrow="always" indicator-position="none" trigger="click" v-if="state.economyItemData?.length">
+						<el-carousel class="company-box-loop" :interval="5000" :autoplay="true" arrow="always" indicator-position="none" trigger="click" v-if="state.economyItemData?.length">
 							<el-carousel-item v-for="(itemGroup,groupIndex) in state.economyItemData" :key="groupIndex">
 								<div class="company-box">
 									<div class="item" v-for="(item,index) in itemGroup" :key="index">
@@ -469,6 +472,8 @@
 
 <script lang="ts" setup>
 import { onMounted, reactive, ref, getCurrentInstance } from "vue";
+import { ElMessageBox, ElMessage } from "element-plus";
+
 import { UserFilled } from "@element-plus/icons-vue";
 import { useRoute, useRouter } from "vue-router";
 import { getAPI } from "/@/utils/request";
@@ -594,6 +599,16 @@ onMounted(() => {
 	}
 	//二维码
 	initQrcode();
+
+	//加载数据
+	loadData();
+	//每小时重新请求接口
+	setInterval(() => {
+		loadData();
+	}, 1000 * 60 * 60);
+});
+
+const loadData = () => {
 	//诚列史
 	getIntroduce();
 	//集体经济
@@ -610,7 +625,6 @@ onMounted(() => {
 	//排行
 	getTotalRanking();
 	getMonthRanking();
-	autoChangeRanking();
 	//诚议
 	getArgumentAmount();
 	getArgumentList();
@@ -621,7 +635,7 @@ onMounted(() => {
 	// lazyImg(".public-news-box .img");
 	//志愿者
 	getVolunteerList();
-});
+};
 
 //诚列史
 const getIntroduce = async () => {
@@ -630,13 +644,13 @@ const getIntroduce = async () => {
 	});
 	let tmp = data.result ?? {};
 	tmp.picture = transformUploadData(tmp.picture);
-	if(tmp.picture.length>1){
-		tmp.picture = tmp.picture.slice(0,5);
+	if (tmp.picture.length > 1) {
+		tmp.picture = tmp.picture.slice(0, 5);
 	}
 	tmp.logo = transformUploadData(tmp.logo);
-	if(tmp.logo.length){
+	if (tmp.logo.length) {
 		tmp.logo = tmp.logo[0];
-	}else{
+	} else {
 		tmp.logo = undefined;
 	}
 	state.introduce = tmp;
@@ -744,7 +758,7 @@ const getArgumentList = async () => {
 	state.tableConfig.argumentList = data.result.tableColumns;
 	state.tableConfig.argumentList.columns =
 		state.tableConfig.argumentList.columns.filter(
-			(item: any) => item.type !== 1
+			(item: any) => item.type !== 1 && item.column != "canyuyishirenyuan"
 		);
 };
 
@@ -823,6 +837,9 @@ const getMonthRanking = async () => {
 	});
 	state.monthRankingTop = tmp.slice(0, 3);
 	state.monthRankingOther = tmp.slice(3, 10);
+	if (tmp.length > 0) {
+		autoChangeRanking();
+	}
 };
 
 const stopChangeRanking = () => {
@@ -830,7 +847,8 @@ const stopChangeRanking = () => {
 };
 //自动切换排行
 const autoChangeRanking = () => {
-	if(state.monthRankingOther.length < 1){
+	if (state.monthRankingTop.length < 1) {
+		stopChangeRanking();
 		return;
 	}
 	state.rankingTimer = setInterval(() => {
@@ -891,7 +909,7 @@ const openEconomyDialog = (type: number, title: string, inOrOut?: string) => {
 };
 //打开排行人员积分列表
 const openRankingDialog = (userName: string) => {
-	let tableParams = { 
+	let tableParams = {
 		conditions: [
 			{
 				fieldName: "xingming",
@@ -899,9 +917,13 @@ const openRankingDialog = (userName: string) => {
 				fieldValue: userName,
 				isValueField: true,
 			},
-		]
-	 };
-	tableDialogRef?.value.openDialog(state.tableConfig.rankingList, userName, tableParams);
+		],
+	};
+	tableDialogRef?.value.openDialog(
+		state.tableConfig.rankingList,
+		userName,
+		tableParams
+	);
 };
 //列表弹窗
 const openTableDialog = (
@@ -1021,10 +1043,21 @@ const getPageDate = () => {
 		state.pageDate = { ...date };
 	}, 1000);
 };
-const jumpDistrict = ()=>{
-	router.push('/district');
-}
-
+const jumpDistrict = () => {
+	router.push("/district");
+};
+//清除缓存
+const clearCache = async () => {
+	const { data } = await getAPI(LargeScreenApi).clearCache({
+		id: state.id,
+	});
+	loadData();
+	ElMessage({
+		message: `缓存已清理`,
+		type: "warning",
+		showClose: true,
+	});
+};
 </script>
 
 <style lang="scss">
@@ -1230,7 +1263,7 @@ div {
 	}
 	.screen-title {
 		font-size: 28px;
-		letter-spacing: 5px; 
+		letter-spacing: 5px;
 	}
 	.screen-subtitle {
 		margin-top: 7px;
@@ -1259,7 +1292,7 @@ div {
 		display: flex;
 		align-items: center;
 		color: #fff;
-		.date-main{
+		.date-main {
 			border-right: 1px #999 dotted;
 			padding-right: 10px;
 		}
@@ -1282,16 +1315,20 @@ div {
 		}
 		.nav-back-btn {
 			margin-left: 30px;
-			width: 80px;
-			height: 30px;
 			display: flex;
-			align-items: center;
-			justify-content: center;
-			text-align: center;
-			background: url('/@/assets/images/community/street.png') center center no-repeat;
-			background-size: 100% 100%;
-			opacity: .6;
-			cursor: pointer;
+			.btn {
+				width: 80px;
+				height: 30px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				text-align: center;
+				background: url("/@/assets/images/community/street.png") center
+					center no-repeat;
+				background-size: 100% 100%;
+				opacity: 0.6;
+				cursor: pointer;
+			}
 		}
 	}
 	.weather {
@@ -1485,6 +1522,9 @@ div {
 	}
 }
 // 集体经济-企业统计
+.company-box-loop {
+	height: 140px;
+}
 .company-box {
 	display: flex;
 	flex-wrap: wrap;
@@ -1643,6 +1683,10 @@ div {
 		align-items: flex-start;
 		.date {
 			line-height: 1;
+		}
+		.state {
+			flex-shrink: 0;
+			width: 3em;
 		}
 	}
 }
@@ -1876,16 +1920,39 @@ div {
 }
 
 // 大屏端
-// @media screen and (min-width:1919px) and (max-width: 2260px) {
-// 	.total-box {
-// 		margin-top: 20px;
-// 		margin-bottom: 20px;
-// 	}
-// 	.public-news-card {
-// 		margin-top: 20px;
-// 	}
-// }
-
+@media only screen and (min-width: 1921px) {
+	.total-box {
+		margin-top: 20px;
+		margin-bottom: 20px;
+	}
+	.public-news-card {
+		margin-top: 20px;
+	}
+	.company-box-loop {
+		height: 190px;
+	}
+	.company-box {
+		p {
+			line-height: 3;
+		}
+		.item {
+			li {
+				padding-top: 10px;
+				padding-bottom: 10px;
+			}
+		}
+	}
+}
+// 小屏端
+@media only screen and (max-width: 1919px) {
+	.total-box {
+		margin-top: 20px;
+		margin-bottom: 20px;
+	}
+	.public-news-card {
+		margin-top: 20px;
+	}
+}
 
 // 移动端
 @media screen and (max-width: 768px) {
@@ -1914,7 +1981,7 @@ div {
 				height: 20px;
 			}
 			.screen-title {
-				font-size: 20px; 
+				font-size: 20px;
 			}
 		}
 		.main-container {
